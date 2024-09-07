@@ -1,0 +1,8 @@
+Package: com.kdt.sparsebox
+Name: SparseBox
+Version: 0.0.1
+Architecture: iphoneos-arm
+Description: An awesome application!
+Maintainer: khanhduytran0
+Author: khanhduytran0
+Section: Utilities
