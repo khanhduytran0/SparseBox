@@ -192,7 +192,7 @@ struct MobileBackupDatabase {
     
     func toData() -> Data {
         var result = NSMutableData()
-        result.append(Data("mbdb".utf8))
+        result.append(Data(magic.utf8))
         result.append(version, length: version.count)
         for record in records {
             result.append(record.toData())

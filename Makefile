@@ -16,12 +16,12 @@ libEMProxy_INSTALL_PATH = /Applications/$(APPLICATION_NAME).app/Frameworks
 # libimobiledevice + minimuxer
 libimobiledevice_FILES = lib/empty.swift
 libimobiledevice_LDFLAGS = \
-  -force_load /var/jb/usr/lib/libimobiledevice-1.0.a \
-  -force_load /var/jb/usr/lib/libimobiledevice-glue-1.0.a \
-  -force_load /var/jb/usr/lib/libplist-2.0.a \
-  -force_load /var/jb/usr/lib/libusbmuxd-2.0.a \
-  -force_load /var/jb/usr/lib/libcrypto.a \
-  -force_load /var/jb/usr/lib/libssl.a \
+  -force_load lib/libimobiledevice-1.0.a \
+  -force_load lib/libimobiledevice-glue-1.0.a \
+  -force_load lib/libplist-2.0.a \
+  -force_load lib/libusbmuxd-2.0.a \
+  -force_load lib/libcrypto.a \
+  -force_load lib/libssl.a \
   -force_load lib/libminimuxer-ios.a \
   -Wl,-mllvm,--opaque-pointers \
   -install_name @rpath/libimobiledevice.dylib

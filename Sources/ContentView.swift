@@ -38,7 +38,6 @@ struct ContentView: View {
                             Directory(path: "Library/Preferences", domain: "RootDomain").toRecord()
                         ])
                         try! mbdb.toData().write(to: file)
-                        
                         lastError = "Test error"
                         showErrorAlert.toggle()
                     }
@@ -63,19 +62,11 @@ struct ContentView: View {
                 Button("OK") {}
             } message: {
                 Text(lastError ?? "???")
-                /*
-                if let data = try? Data(contentsOf: file) {
-                    let a = Mbdb(data: data)
-                    Text("\(a)")
-                } else {
-                    Text("File doesnt't exist at \(file)")
-                }
-                 */
             }
         }
         .onAppear {
             _ = start_emotional_damage("127.0.0.1:51820")
-            if let altPairingFile = Bundle.main.object(forInfoDictionaryKey: "ALTPairingFile") as? String, altPairingFile.count > 5000 {
+            if let altPairingFile = Bundle.main.object(forInfoDictionaryKey: "ALTPairingFile") as? String, altPairingFile.count > 5000, pairingFile == nil {
                 pairingFile = altPairingFile
             }
             startMinimuxer()
