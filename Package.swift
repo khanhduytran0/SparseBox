@@ -6,8 +6,14 @@
 
 import PackageDescription
 import AppleProductTypes
+import Foundation
 
 let currentDirectoryPath = "/var/mobile/Library/Mobile Documents/iCloud~com~apple~Playgrounds/Documents/SparseBox.swiftpm"
+#if os(iOS)
+let compilerAccessiblePath = "/var/mobile/Containers/Data/PluginKitPlugin/C7B10296-7E83-4753-9BF5-A3F9A7F800C7/Documents"
+#else
+let compilerAccessiblePath = FileManager.default.currentDirectoryPath
+#endif
 
 let package = Package(
     name: "SparseBox",
@@ -42,16 +48,19 @@ let package = Package(
                 .process("Resources")
             ],
             swiftSettings: [
-                .enableUpcomingFeature("BareSlashRegexLiterals")
+                .enableUpcomingFeature("BareSlashRegexLiterals"),
+                .unsafeFlags([
+                    "-import-objc-header",
+                    "\(compilerAccessiblePath)/minimuxer-Bridging-Header.h"
+                ]),
             ],
             linkerSettings: [
                 .unsafeFlags([
-                    //"-import-objc-header", "\(currentDirectoryPath)/minimuxer-Bridging-Header.h",
                     // Building in Swift Playgrounds, cannot use normal linking flow
                     "-rpath", "@executable_path",
                     "-rpath", "@executable_path/Frameworks",
-                    "-L\(currentDirectoryPath)/Resources",
-                    "-L/var/mobile/Containers/Data/PluginKitPlugin/2AED8E14-F306-4B6C-B736-2546CF7AD185/Documents",
+                    //"-L\(currentDirectoryPath)/Resources",
+                    "-L\(compilerAccessiblePath)/Resources",
                 ]),
                 .linkedLibrary("EMProxy"),
                 .linkedLibrary("imobiledevice")
