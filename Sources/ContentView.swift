@@ -7,7 +7,7 @@ struct ContentView: View {
     @State var showErrorAlert = false
     @State var lastError: String?
     var body: some View {
-        NavigationView {
+        NavigationStack {
             Form {
                 Section {
                     Button {
@@ -28,18 +28,8 @@ struct ContentView: View {
                     }
                 }
                 Section {
-                    Button("Apply test backup") {
-                        let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-                        let file = documentsDirectory.appendingPathComponent("Manifest.mbdb", conformingTo: .data)
-                        
-                        var mbdb = MobileBackupDatabase(records: [
-                            Directory(path: "", domain: "RootDomain").toRecord(),
-                            Directory(path: "Library", domain: "RootDomain").toRecord(),
-                            Directory(path: "Library/Preferences", domain: "RootDomain").toRecord()
-                        ])
-                        try! mbdb.toData().write(to: file)
-                        lastError = "Test error"
-                        showErrorAlert.toggle()
+                    NavigationLink("Apply test backup") {
+                        LogView()
                     }
                 }
             }
@@ -85,5 +75,17 @@ struct ContentView: View {
             lastError = error.localizedDescription
             showErrorAlert.toggle()
         }
+    }
+    
+    public func withArrayOfCStrings<R>(
+        _ args: [String],
+        _ body: ([UnsafeMutablePointer<CChar>?]) -> R
+    ) -> R {
+        var cStrings = args.map { strdup($0) }
+        cStrings.append(nil)
+        defer {
+            cStrings.forEach { free($0) }
+        }
+        return body(cStrings)
     }
 }

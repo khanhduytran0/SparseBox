@@ -14,7 +14,8 @@ libEMProxy_FRAMEWORKS = Security
 libEMProxy_INSTALL_PATH = /Applications/$(APPLICATION_NAME).app/Frameworks
 
 # libimobiledevice + minimuxer
-libimobiledevice_FILES = lib/empty.swift
+libimobiledevice_FILES = idevicebackup2.c
+libimobiledevice_CFLAGS = -Iinclude
 libimobiledevice_LDFLAGS = \
   -force_load lib/libimobiledevice-1.0.a \
   -force_load lib/libimobiledevice-glue-1.0.a \
@@ -29,16 +30,15 @@ libimobiledevice_FRAMEWORKS = Foundation Security SystemConfiguration
 libimobiledevice_INSTALL_PATH = /Applications/$(APPLICATION_NAME).app/Frameworks
 
 SparseBox_FILES = \
-  em_proxy.swift \
-  lib/empty.swift \
-  minimuxer-helpers.swift \
-  minimuxer.swift \
+  include/em_proxy.swift \
+  include/minimuxer-helpers.swift \
+  include/minimuxer.swift \
+  include/SwiftBridgeCore.swift \
   Sources/SparseRestore/MBDB.swift \
   Sources/SparseRestore/Backup.swift \
   Sources/MyApp.swift \
   Sources/SwiftNIO/NIOFoundationCompat/ByteBuffer-foundation.swift \
   Sources/SwiftNIO/_NIOBase64/Base64.swift \
-  Sources/SwiftNIO/NIOFileSystem/ByteBuffer+FileSystem.swift \
   Sources/SwiftNIO/NIOCore/ByteBuffer-lengthPrefix.swift \
   Sources/SwiftNIO/NIOCore/ByteBuffer-conversions.swift \
   Sources/SwiftNIO/NIOCore/IntegerTypes.swift \
@@ -51,8 +51,7 @@ SparseBox_FILES = \
   Sources/SwiftNIO/NIOCore/CircularBuffer.swift \
   Sources/SwiftNIO/NIOCore/ByteBuffer-int.swift \
   Sources/SwiftNIO/NIOPosix/PointerHelpers.swift \
-  Sources/ContentView.swift \
-  SwiftBridgeCore.swift
+  Sources/ContentView.swift
 SparseBox_FRAMEWORKS = UIKit
 SparseBox_PRIVATE_FRAMEWORKS = AppleMobileFileIntegrity
 SparseBox_CFLAGS = -fcommon -fobjc-arc

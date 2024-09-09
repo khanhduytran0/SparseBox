@@ -187,7 +187,6 @@ struct MobileBackupDatabase {
     
     init(records: [MBDBRecord]) {
         self.records = records
-        print("set rec \(records)")
     }
     
     func toData() -> Data {

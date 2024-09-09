@@ -130,15 +130,31 @@ class Backup {
         self.files = files
     }
     
-    func writeTo(directory: String) {
+    func writeTo(directory: URL) throws {
         for file in files {
             if file is ConcreteFile {
                 let fileName = file.domain + "-" + file.path
-                let filePath = directory + "/" + Data(Insecure.SHA1.hash(data: fileName.data(using: .utf8)!))
+                let hashedFileName = Data(Insecure.SHA1.hash(data: fileName.data(using: .utf8)!))
                     .map { String(format: "%02hhx", $0) }.joined()
-                try! (file as! ConcreteFile).contents.write(to: URL(filePath: filePath))
+                let filePath = directory.appendingPathComponent(hashedFileName, conformingTo: .data)
+                try (file as! ConcreteFile).contents.write(to: filePath)
             }
         }
+        
+        let manifestDBPath = directory.appendingPathComponent("Manifest.mbdb", conformingTo: .data)
+        try generateManifestDB().write(to: manifestDBPath)
+        
+        let statusPath = directory.appendingPathComponent("Status.plist", conformingTo: .data)
+        try PropertyListSerialization.data(fromPropertyList: generateStatus(), format: .xml, options: 0)
+            .write(to: statusPath)
+        
+        let manifestPlistPath = directory.appendingPathComponent("Manifest.plist", conformingTo: .data)
+        try PropertyListSerialization.data(fromPropertyList: generateManifest(), format: .xml, options: 0)
+            .write(to: manifestPlistPath)
+        
+        let infoPlistPath = directory.appendingPathComponent("Info.plist", conformingTo: .data)
+        try PropertyListSerialization.data(fromPropertyList: [:], format: .xml, options: 0)
+            .write(to: infoPlistPath)
     }
 
     func generateManifestDB() -> Data {
@@ -149,7 +165,7 @@ class Backup {
         return MobileBackupDatabase(records: records).toData()
     }
 
-    static func generateStatus() -> [String : Any] {
+    func generateStatus() -> [String : Any] {
         return [
             "BackupState": "new",
             "Date": Date(),
@@ -161,7 +177,7 @@ class Backup {
         ]
     }
     
-    static func generateManifest() -> [String : Any] {
+    func generateManifest() -> [String : Any] {
         return [
             "BackupKeyBag": Data(base64Encoded: """
             VkVSUwAAAAQAAAAFVFlQRQAAAAQAAAABVVVJRAAAABDud41d1b9NBICR1BH9JfVtSE1D
@@ -191,7 +207,7 @@ class Backup {
             xwNr2FVVSUQAAAAQ/Q9feZxLS++qSe/a4emRRENMQVMAAAAEAAAAC1dSQVAAAAAEAAAA
             A0tUWVAAAAAEAAAAAFdQS1kAAAAocYda2jyYzzSKggRPw/qgh6QPESlkZedgDUKpTr4Z
             Z8FDgd7YoALY1g==
-            """)!,
+            """, options: .ignoreUnknownCharacters)!,
             "Lockdown": [:],
             "SystemDomainsVersion": "20.0",
             "Version": "9.1"
