@@ -220,10 +220,6 @@ extension String {
         customUnsafeUninitializedCapacity capacity: Int,
         initializingUTF8With initializer: (_ buffer: UnsafeMutableBufferPointer<UInt8>) throws -> Int
     ) rethrows {
-        if #available(macOS 11.0, iOS 14.0, tvOS 14.0, watchOS 7.0, *) {
-            try self.init(unsafeUninitializedCapacity: capacity, initializingUTF8With: initializer)
-        } else {
-            try self.init(backportUnsafeUninitializedCapacity: capacity, initializingUTF8With: initializer)
-        }
+        try self.init(unsafeUninitializedCapacity: capacity, initializingUTF8With: initializer)
     }
 }

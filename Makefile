@@ -30,13 +30,15 @@ libimobiledevice_FRAMEWORKS = Foundation Security SystemConfiguration
 libimobiledevice_INSTALL_PATH = /Applications/$(APPLICATION_NAME).app/Frameworks
 
 SparseBox_FILES = \
-  include/em_proxy.swift \
   include/minimuxer-helpers.swift \
   include/minimuxer.swift \
+  include/em_proxy.swift \
   include/SwiftBridgeCore.swift \
   Sources/SparseRestore/MBDB.swift \
   Sources/SparseRestore/Backup.swift \
+  Sources/LogView.swift \
   Sources/MyApp.swift \
+  Sources/MobileDevice/MobileDevice.swift \
   Sources/SwiftNIO/NIOFoundationCompat/ByteBuffer-foundation.swift \
   Sources/SwiftNIO/_NIOBase64/Base64.swift \
   Sources/SwiftNIO/NIOCore/ByteBuffer-lengthPrefix.swift \
@@ -55,7 +57,7 @@ SparseBox_FILES = \
 SparseBox_FRAMEWORKS = UIKit
 SparseBox_PRIVATE_FRAMEWORKS = AppleMobileFileIntegrity
 SparseBox_CFLAGS = -fcommon -fobjc-arc
-SparseBox_SWIFTFLAGS = -import-objc-header minimuxer-Bridging-Header.h
+SparseBox_SWIFTFLAGS = -Iinclude -import-objc-header include/minimuxer-Bridging-Header.h
 SparseBox_LDFLAGS = -L$(THEOS_OBJ_DIR) -rpath @executable_path/Frameworks
 SparseBox_LIBRARIES = EMProxy imobiledevice
 SparseBox_CODESIGN_FLAGS = -Sentitlements.plist
