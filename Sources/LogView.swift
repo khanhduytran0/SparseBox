@@ -6,7 +6,7 @@ struct LogView: View {
     @State var log: String = ""
     @State var ran = false
     let willReboot: Bool
-    let mobileGestaltData: Data
+    let mobileGestaltURL: URL
     var body: some View {
         NavigationView {
             ScrollViewReader { proxy in
@@ -39,7 +39,7 @@ struct LogView: View {
         .navigationTitle("Log output")
     }
     
-    init(mobileGestaltURL: URL, reboot: Bool) {
+    init(mgURL: URL, reboot: Bool) {
         setvbuf(stdout, nil, _IOLBF, 0) // make stdout line-buffered
         setvbuf(stderr, nil, _IONBF, 0) // make stderr unbuffered
         
@@ -47,7 +47,7 @@ struct LogView: View {
         dup2(logPipe.fileHandleForWriting.fileDescriptor, fileno(stdout))
         dup2(logPipe.fileHandleForWriting.fileDescriptor, fileno(stderr))
         
-        mobileGestaltData = try! Data(contentsOf: mobileGestaltURL)
+        mobileGestaltURL = mgURL
         willReboot = reboot
     }
     
@@ -65,39 +65,47 @@ struct LogView: View {
             try? FileManager.default.removeItem(at: folder)
             try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: false)
             
-            let backupFiles: [BackupFile] = [
-                /*
-                Directory(path: "", domain: "RootDomain", owner: 501, group: 501),
-                Directory(path: "Library", domain: "RootDomain", owner: 501, group: 501),
-                Directory(path: "Library/Preferences", domain: "RootDomain", owner: 501, group: 501),
-                ConcreteFile(path: "Library/Preferences/temp", domain: "RootDomain", contents: mobileGestaltData, owner: 501, group: 501),
-                Directory(path: "", domain: "SysContainerDomain-../../../../../../../../var/.backup.i/var/containers/Shared/SystemGroup/systemgroup.com.apple.mobilegestaltcache/", owner: 501, group: 501),
-                 */
-                ConcreteFile(path: "", domain: "SysContainerDomain-../../../../../../../../var/containers/Shared/SystemGroup/systemgroup.com.apple.mobilegestaltcache/Library/Caches/com.apple.MobileGestalt.plist", contents: mobileGestaltData, owner: 501, group: 501),
-                //Directory(path: "", domain: "SysContainerDomain-../../../../../../../../var/.backup.i/var/root/Library/Preferences/temp", owner: 501, group: 501),
-                ConcreteFile(path: "", domain: "SysContainerDomain-../../../../../../../../crash_on_purpose", contents: Data()),
-            ]
-            
-            let mbdb = Backup(files: backupFiles)
+            let mbdb = createBackupFile(from: mobileGestaltURL, to: URL(filePath: "/var/containers/Shared/SystemGroup/systemgroup.com.apple.mobilegestaltcache/Library/Caches/NOT.apple.MobileGestalt.plist"))
             try mbdb.writeTo(directory: folder)
             
             // Restore now
-             var restoreArgs = [
-             "idevicebackup2",
-             "-n", "restore", "--system",
-             documentsDirectory.path(percentEncoded: false)
-             ]
+            var restoreArgs = [
+                "idevicebackup2",
+                "-n", "restore", "--system",
+                documentsDirectory.path(percentEncoded: false)
+            ]
             if !willReboot {
                 restoreArgs.insert("--no-reboot", at: 3)
             }
-             print("Executing args: \(restoreArgs)")
-             var argv = restoreArgs.map{ strdup($0) }
-             let result = idevicebackup2_main(Int32(restoreArgs.count), &argv)
-             print("idevicebackup2 exited with code \(result)")
-             logPipe.fileHandleForReading.readabilityHandler = nil
+            print("Executing args: \(restoreArgs)")
+            var argv = restoreArgs.map{ strdup($0) }
+            let result = idevicebackup2_main(Int32(restoreArgs.count), &argv)
+            print("idevicebackup2 exited with code \(result)")
+            logPipe.fileHandleForReading.readabilityHandler = nil
         } catch {
             print(error.localizedDescription)
             return
         }
+    }
+    
+    func createBackupFile(from: URL, to: URL) -> Backup {
+        // open the file and read the contents
+        let contents = try! Data(contentsOf: from)
+        
+        // required on iOS 17.0+ since /var/mobile is on a separate partition
+        let basePath = to.path(percentEncoded: false).hasPrefix("/var/mobile/") ? "/var/mobile/backup" : "/var/backup"
+        
+        // create the backup
+        return Backup(files: [
+            Directory(path: "", domain: "RootDomain"),
+            Directory(path: "Library", domain: "RootDomain"),
+            Directory(path: "Library/Preferences", domain: "RootDomain"),
+            ConcreteFile(path: "Library/Preferences/temp", domain: "RootDomain", contents: contents),
+            Directory(path: "", domain: "SysContainerDomain-../../../../../../../..\(basePath)\(to.deletingLastPathComponent().path(percentEncoded: false))", owner: 501, group: 501),
+            ConcreteFile(path: "", domain: "SysContainerDomain-../../../../../../../..\(basePath)\(to.path())", contents: Data(), owner: 501, group: 501),
+            // Break the hard link
+            ConcreteFile(path: "", domain: "SysContainerDomain-../../../../../../../../var/.backup.i/var/root/Library/Preferences/temp", contents: Data(), owner: 501, group: 501),
+            ConcreteFile(path: "", domain: "SysContainerDomain-../../../../../../../../crash_on_purpose", contents: Data()),
+        ])
     }
 }

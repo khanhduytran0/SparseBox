@@ -93,7 +93,7 @@ Thanks to:
             }
             .navigationDestination(for: String.self) { view in
                 if view == "ApplyChanges" {
-                    LogView(mobileGestaltURL: modifiedMobileGestalt, reboot: reboot)
+                    LogView(mgURL: modifiedMobileGestalt, reboot: reboot)
                 }
             }
             .navigationTitle("SparseBox")
