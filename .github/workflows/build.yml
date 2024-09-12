@@ -1,0 +1,49 @@
+name: Build
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+
+      - name: Checkout theos/theos
+        uses: actions/checkout@main
+        with:
+          repository: theos/theos
+          ref: master
+          submodules: recursive
+          path: theos
+
+      - name: Checkout theos/sdks
+        uses: actions/checkout@main
+        with:
+          repository: theos/sdks
+          ref: master
+          sparse-checkout: iPhoneOS16.5.sdk
+          path: theos/sdks
+
+      - name: Ensure main utils are installed
+        uses: dhinakg/procursus-action@main
+        with:
+          packages: coreutils make xz ldid
+          
+      - name: Build
+        run: |
+          export THEOS=theos
+
+          git submodule update --init
+          bash get_libraries.sh
+          gmake package FINALPACKAGE=1 STRIP=0
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@main
+        with:
+          name: artifact
+          path: packages/*.ipa
