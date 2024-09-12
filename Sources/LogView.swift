@@ -5,6 +5,8 @@ let logPipe = Pipe()
 struct LogView: View {
     @State var log: String = ""
     @State var ran = false
+    let willReboot: Bool
+    let mobileGestaltData: Data
     var body: some View {
         NavigationView {
             ScrollViewReader { proxy in
@@ -29,8 +31,7 @@ struct LogView: View {
                     }
                     
                     DispatchQueue.global(qos: .background).async {
-                        print("RUNNING TEST")
-                        runTest()
+                        performRestore()
                     }
                 }
             }
@@ -38,24 +39,24 @@ struct LogView: View {
         .navigationTitle("Log output")
     }
     
-    init() {
+    init(mobileGestaltURL: URL, reboot: Bool) {
         setvbuf(stdout, nil, _IOLBF, 0) // make stdout line-buffered
         setvbuf(stderr, nil, _IONBF, 0) // make stderr unbuffered
         
         // create the pipe and redirect stdout and stderr
         dup2(logPipe.fileHandleForWriting.fileDescriptor, fileno(stdout))
         dup2(logPipe.fileHandleForWriting.fileDescriptor, fileno(stderr))
+        
+        mobileGestaltData = try! Data(contentsOf: mobileGestaltURL)
+        willReboot = reboot
     }
     
-    func runTest() {
+    func performRestore() {
         let deviceList = MobileDevice.deviceList()
         guard deviceList.count == 1 else {
             print("Invalid device count: \(deviceList.count)")
             return
         }
-        
-        // Save MobileGestalt
-        let mobileGestaltPlist = Data()
         
         let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
         let folder = documentsDirectory.appendingPathComponent(deviceList.first!, conformingTo: .data)
@@ -69,17 +70,20 @@ struct LogView: View {
                 Directory(path: "Library", domain: "RootDomain"),
                 Directory(path: "Library/Preferences", domain: "RootDomain")
             ]
-            addExploitedConcreteFile(list: &backupFiles, path: "/var/containers/Shared/SystemGroup/systemgroup.com.apple.mobilegestaltcache/Library/Caches/NOT.com.apple.MobileGestalt.plist", contents: mobileGestaltPlist)
+            addExploitedConcreteFile(list: &backupFiles, path: "/var/containers/Shared/SystemGroup/systemgroup.com.apple.mobilegestaltcache/Library/Caches/com.apple.MobileGestalt.plist", contents: mobileGestaltData, owner: 501, group: 501)
             backupFiles.append(ConcreteFile(path: "", domain: "SysContainerDomain-../../../../../../../../crash_on_purpose", contents: Data(), owner: 501, group: 501))
             let mbdb = Backup(files: backupFiles)
             try mbdb.writeTo(directory: folder)
             
             // Restore now
-             let restoreArgs = [
+             var restoreArgs = [
              "idevicebackup2",
-             "-n", "restore", "--no-reboot", "--system",
+             "-n", "restore", "--system",
              documentsDirectory.path(percentEncoded: false)
              ]
+            if !willReboot {
+                restoreArgs.insert("--no-reboot", at: 3)
+            }
              print("Executing args: \(restoreArgs)")
              var argv = restoreArgs.map{ strdup($0) }
              let result = idevicebackup2_main(Int32(restoreArgs.count), &argv)

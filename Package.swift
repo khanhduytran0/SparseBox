@@ -53,8 +53,6 @@ let package = Package(
                     "-I\(compilerAccessiblePath)/include",
                     "-import-objc-header",
                     "\(compilerAccessiblePath)/include/minimuxer-Bridging-Header.h",
-                    "-import-objc-header",
-                    "\(compilerAccessiblePath)/include/libimobiledevice-Bridging-Header.h",
                 ]),
             ],
             linkerSettings: [
