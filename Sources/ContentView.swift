@@ -48,6 +48,7 @@ struct ContentView: View {
                 Section {
                     Toggle("Reboot after finish restoring", isOn: $reboot)
                     Button("Apply changes") {
+                        try! mobileGestalt.write(to: modifiedMobileGestalt)
                         applyChanges()
                     }
                     Button("Reset changes") {
@@ -137,7 +138,6 @@ Thanks to:
                     // we're setting human-readable keys so it does not interfere with existing keys, just remove it
                     cacheExtra.removeObject(forKey: key)
                 }
-                try! mobileGestalt.write(to: modifiedMobileGestalt)
             }
         )
     }

@@ -55,7 +55,6 @@ SparseBox_FILES = \
   Sources/SwiftNIO/NIOPosix/PointerHelpers.swift \
   Sources/ContentView.swift
 SparseBox_FRAMEWORKS = UIKit
-SparseBox_PRIVATE_FRAMEWORKS = AppleMobileFileIntegrity
 SparseBox_CFLAGS = -fcommon -fobjc-arc
 SparseBox_SWIFTFLAGS = -Iinclude -import-objc-header include/minimuxer-Bridging-Header.h
 SparseBox_LDFLAGS = -L$(THEOS_OBJ_DIR) -rpath @executable_path/Frameworks
