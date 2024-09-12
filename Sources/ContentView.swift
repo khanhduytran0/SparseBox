@@ -34,6 +34,7 @@ struct ContentView: View {
                 }
                 Section {
                     Toggle("Action Button", isOn: bindingForMGKey("cT44WE1EohiwRzhsZ8xEsw"))
+                    Toggle("Allow installing iPadOS apps", isOn: bindingForMGKey("9MZ5AdH43csAUajl/dU+IQ", type: [Int].self, defaultValue: [1], enableValue: [1, 2]))
                     Toggle("Always on Display (18.0+)", isOn: bindingForMGKey("j8/Omm6s1lsmTDFsXjsBfA"))
                     Toggle("Apple Pencil", isOn: bindingForMGKey("yhHcB0iH0d1XzPO/CFd3ow"))
                     Toggle("Boot chime", isOn: bindingForMGKey("QHxt+hGLaBPbQJbXiUJX3w"))
@@ -45,7 +46,8 @@ struct ContentView: View {
                     Toggle("Internal Storage info", isOn: bindingForMGKey("LBJfwOEzExRxzlAnSuI7eg"))
                     Toggle("Metal HUD for all apps", isOn: bindingForMGKey("EqrsVvjcYDdxHBiQmGhAWw"))
                     Toggle("Stage Manager", isOn: bindingForMGKey("qeaj75wk3HF4DwQ8qbIi7g"))
-                    Toggle("Tap to Wake", isOn: bindingForMGKey("yZf3GTRMGTuwSV/lD7Cagw"))
+                        .disabled(UIDevice.current.userInterfaceIdiom != .pad)
+                    Toggle("Tap to Wake (iPhone SE)", isOn: bindingForMGKey("yZf3GTRMGTuwSV/lD7Cagw"))
                 }
                 Section {
                     Toggle("Reboot after finish restoring", isOn: $reboot)
