@@ -6,7 +6,7 @@ struct ContentView: View {
     let modifiedMobileGestalt: URL
     @AppStorage("PairingFile") var pairingFile: String?
     @State var mobileGestalt: NSMutableDictionary
-    @State var reboot = false
+    @State var reboot = true
     @State var showPairingFileImporter = false
     @State var showErrorAlert = false
     @State var lastError: String?
@@ -37,7 +37,8 @@ struct ContentView: View {
                     Toggle("Always on Display (18.0+)", isOn: bindingForMGKey("j8/Omm6s1lsmTDFsXjsBfA"))
                     Toggle("Apple Pencil", isOn: bindingForMGKey("yhHcB0iH0d1XzPO/CFd3ow"))
                     Toggle("Boot chime", isOn: bindingForMGKey("QHxt+hGLaBPbQJbXiUJX3w"))
-                    Toggle("Camera button", isOn: bindingForMGKey("CwvKxM2cEogD3p+HYgaW0Q"))
+                    Toggle("Camera button (18.0rc+)", isOn: bindingForMGKey("CwvKxM2cEogD3p+HYgaW0Q"))
+                    Toggle("Camera button (enable this too)", isOn: bindingForMGKey("oOV1jhJbdV3AddkcCg0AEA"))
                     Toggle("Charge limit", isOn: bindingForMGKey("37NVydb//GP/GrhuTN+exg"))
                     Toggle("Crash Detection (might not work)", isOn: bindingForMGKey("HCzWusHQwZDea6nNhaKndw"))
                     Toggle("Dynamic Island (17.4+ method)", isOn: bindingForMGKey("YlEtTtHlNesRBMal1CqRaA"))
