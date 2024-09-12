@@ -63,6 +63,7 @@ A terrible app by @khanhduytran0. Use it at your own risk.
 Thanks to:
 @SideStore: em_proxy and minimuxer
 @JJTech0130: SparseRestore and backup exploit
+@libimobiledevice
 """)
                 }
             }
