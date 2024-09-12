@@ -33,17 +33,18 @@ struct ContentView: View {
                     }
                 }
                 Section {
-                    Toggle("Action Button", isOn: bindingForMGKey("RingerButtonCapability"))
-                    Toggle("Always on Display (18.0+)", isOn: bindingForMGKey("DeviceSupportsAlwaysOnTime"))
-                    Toggle("Apple Pencil", isOn: bindingForMGKey("DeviceSupportsApplePencil"))
-                    Toggle("Boot chime", isOn: bindingForMGKey("DeviceSupportsBootChime"))
-                    Toggle("Charge limit", isOn: bindingForMGKey("DeviceSupports80ChargeLimit"))
-                    Toggle("Crash Detection (might not work)", isOn: bindingForMGKey("DeviceSupportsCollisionSOS"))
-                    Toggle("Dynamic Island (17.4+ method)", isOn: bindingForMGKey("DeviceSupportsDynamicIsland"))
-                    Toggle("Internal Storage info", isOn: bindingForMGKey("InternalBuild"))
-                    Toggle("Metal HUD for all apps", isOn: bindingForMGKey("apple-internal-install"))
-                    Toggle("Stage Manager", isOn: bindingForMGKey("DeviceSupportsEnhancedMultitasking"))
-                    Toggle("Tap to Wake", isOn: bindingForMGKey("DeviceSupportsTapToWake"))
+                    Toggle("Action Button", isOn: bindingForMGKey("cT44WE1EohiwRzhsZ8xEsw"))
+                    Toggle("Always on Display (18.0+)", isOn: bindingForMGKey("j8/Omm6s1lsmTDFsXjsBfA"))
+                    Toggle("Apple Pencil", isOn: bindingForMGKey("yhHcB0iH0d1XzPO/CFd3ow"))
+                    Toggle("Boot chime", isOn: bindingForMGKey("QHxt+hGLaBPbQJbXiUJX3w"))
+                    Toggle("Camera button", isOn: bindingForMGKey("CwvKxM2cEogD3p+HYgaW0Q"))
+                    Toggle("Charge limit", isOn: bindingForMGKey("37NVydb//GP/GrhuTN+exg"))
+                    Toggle("Crash Detection (might not work)", isOn: bindingForMGKey("HCzWusHQwZDea6nNhaKndw"))
+                    Toggle("Dynamic Island (17.4+ method)", isOn: bindingForMGKey("YlEtTtHlNesRBMal1CqRaA"))
+                    Toggle("Internal Storage info", isOn: bindingForMGKey("LBJfwOEzExRxzlAnSuI7eg"))
+                    Toggle("Metal HUD for all apps", isOn: bindingForMGKey("EqrsVvjcYDdxHBiQmGhAWw"))
+                    Toggle("Stage Manager", isOn: bindingForMGKey("qeaj75wk3HF4DwQ8qbIi7g"))
+                    Toggle("Tap to Wake", isOn: bindingForMGKey("yZf3GTRMGTuwSV/lD7Cagw"))
                 }
                 Section {
                     Toggle("Reboot after finish restoring", isOn: $reboot)
@@ -63,6 +64,7 @@ A terrible app by @khanhduytran0. Use it at your own risk.
 Thanks to:
 @SideStore: em_proxy and minimuxer
 @JJTech0130: SparseRestore and backup exploit
+@PoomSmart: MobileGestalt dump
 @libimobiledevice
 """)
                 }
@@ -136,7 +138,7 @@ Thanks to:
                 if enabled {
                     cacheExtra[key] = enableValue
                 } else {
-                    // we're setting human-readable keys so it does not interfere with existing keys, just remove it
+                    // just remove the key as it will be pulled from device tree if missing
                     cacheExtra.removeObject(forKey: key)
                 }
             }
