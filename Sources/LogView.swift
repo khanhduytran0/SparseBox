@@ -65,7 +65,7 @@ struct LogView: View {
             try? FileManager.default.removeItem(at: folder)
             try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: false)
             
-            let mbdb = createBackupFile(from: mobileGestaltURL, to: URL(filePath: "/var/containers/Shared/SystemGroup/systemgroup.com.apple.mobilegestaltcache/Library/Caches/NOT.apple.MobileGestalt.plist"))
+            let mbdb = createBackupFile(from: mobileGestaltURL, to: URL(filePath: "/var/containers/Shared/SystemGroup/systemgroup.com.apple.mobilegestaltcache/Library/Caches/com.apple.MobileGestalt.plist"))
             try mbdb.writeTo(directory: folder)
             
             // Restore now
