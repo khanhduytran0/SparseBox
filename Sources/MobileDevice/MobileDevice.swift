@@ -111,8 +111,7 @@ class MobileDevice {
                         print("ERROR: failed to create diagnostic service")
                         return
                     }
-                    print("client \(diagnostics_client)")
-                    if diagnostics_relay_restart(diagnostics_client, 0 as! diagnostics_relay_action_t) != DIAGNOSTICS_RELAY_E_SUCCESS {
+                    if diagnostics_relay_restart(diagnostics_client, DIAGNOSTICS_RELAY_ACTION_FLAG_NONE) != DIAGNOSTICS_RELAY_E_SUCCESS {
                         print("ERROR: Failed to reboot device")
                     }
                     diagnostics_relay_goodbye(diagnostics_client)

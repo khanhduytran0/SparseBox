@@ -45,6 +45,7 @@ typedef enum {
 
 /** Action type for #diagnostics_relay_restart and #diagnostics_relay_shutdown */
 typedef enum {
+    DIAGNOSTICS_RELAY_ACTION_FLAG_NONE = 0,
     DIAGNOSTICS_RELAY_ACTION_FLAG_WAIT_FOR_DISCONNECT = 1 << 1,
     DIAGNOSTICS_RELAY_ACTION_FLAG_DISPLAY_PASS = 1 << 2,
     DIAGNOSTICS_RELAY_ACTION_FLAG_DISPLAY_FAIL = 1 << 3
