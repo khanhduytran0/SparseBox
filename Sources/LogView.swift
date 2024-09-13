@@ -97,14 +97,8 @@ struct LogView: View {
         
         // create the backup
         return Backup(files: [
-            Directory(path: "", domain: "RootDomain"),
-            Directory(path: "Library", domain: "RootDomain"),
-            Directory(path: "Library/Preferences", domain: "RootDomain"),
-            ConcreteFile(path: "Library/Preferences/temp", domain: "RootDomain", contents: contents),
             Directory(path: "", domain: "SysContainerDomain-../../../../../../../..\(basePath)\(to.deletingLastPathComponent().path(percentEncoded: false))", owner: 501, group: 501),
-            ConcreteFile(path: "", domain: "SysContainerDomain-../../../../../../../..\(basePath)\(to.path())", contents: Data(), owner: 501, group: 501),
-            // Break the hard link
-            ConcreteFile(path: "", domain: "SysContainerDomain-../../../../../../../../var/.backup.i/var/root/Library/Preferences/temp", contents: Data(), owner: 501, group: 501),
+            ConcreteFile(path: "", domain: "SysContainerDomain-../../../../../../../..\(basePath)\(to.path(percentEncoded: false))", contents: contents, owner: 501, group: 501),
             ConcreteFile(path: "", domain: "SysContainerDomain-../../../../../../../../crash_on_purpose", contents: Data()),
         ])
     }
