@@ -3,6 +3,7 @@ import SwiftUI
 let logPipe = Pipe()
 
 struct LogView: View {
+    @State var udid: String
     @State var log: String = ""
     @State var ran = false
     let willReboot: Bool
@@ -24,7 +25,10 @@ struct LogView: View {
                     
                     logPipe.fileHandleForReading.readabilityHandler = { fileHandle in
                         let data = fileHandle.availableData
-                        if !data.isEmpty, let logString = String(data: data, encoding: .utf8) {
+                        if !data.isEmpty, var logString = String(data: data, encoding: .utf8) {
+                            if logString.contains(udid) {
+                                logString = logString.replacingOccurrences(of: udid, with: "<redacted>")
+                            }
                             log.append(logString)
                             proxy.scrollTo(0)
                         }
@@ -49,17 +53,19 @@ struct LogView: View {
         
         mobileGestaltURL = mgURL
         willReboot = reboot
-    }
-    
-    func performRestore() {
+        
         let deviceList = MobileDevice.deviceList()
         guard deviceList.count == 1 else {
             print("Invalid device count: \(deviceList.count)")
+            udid = "invalid"
             return
         }
-        
+        udid = deviceList.first!
+    }
+    
+    func performRestore() {
         let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        let folder = documentsDirectory.appendingPathComponent(deviceList.first!, conformingTo: .data)
+        let folder = documentsDirectory.appendingPathComponent(udid, conformingTo: .data)
         
         do {
             try? FileManager.default.removeItem(at: folder)
@@ -71,16 +77,18 @@ struct LogView: View {
             // Restore now
             var restoreArgs = [
                 "idevicebackup2",
-                "-n", "restore", "--system",
+                "-n", "restore", "--no-reboot", "--system",
                 documentsDirectory.path(percentEncoded: false)
             ]
-            if !willReboot {
-                restoreArgs.insert("--no-reboot", at: 3)
-            }
             print("Executing args: \(restoreArgs)")
             var argv = restoreArgs.map{ strdup($0) }
             let result = idevicebackup2_main(Int32(restoreArgs.count), &argv)
             print("idevicebackup2 exited with code \(result)")
+            
+            if willReboot && result == 0 {
+                MobileDevice.rebootDevice(udid: udid)
+            }
+            
             logPipe.fileHandleForReading.readabilityHandler = nil
         } catch {
             print(error.localizedDescription)
@@ -97,9 +105,10 @@ struct LogView: View {
         
         // create the backup
         return Backup(files: [
-            Directory(path: "", domain: "SysContainerDomain-../../../../../../../..\(basePath)\(to.deletingLastPathComponent().path(percentEncoded: false))", owner: 501, group: 501),
-            ConcreteFile(path: "", domain: "SysContainerDomain-../../../../../../../..\(basePath)\(to.path(percentEncoded: false))", contents: contents, owner: 501, group: 501),
-            ConcreteFile(path: "", domain: "SysContainerDomain-../../../../../../../../crash_on_purpose", contents: Data()),
+            //Directory(path: "", domain: "SysContainerDomain-../../../../../../../..\(basePath)\(to.deletingLastPathComponent().path(percentEncoded: false))", owner: 501, group: 501),
+            //ConcreteFile(path: "", domain: "SysContainerDomain-../../../../../../../..\(basePath)\(to.path(percentEncoded: false))", contents: contents, owner: 501, group: 501),
+            ConcreteFile(path: "", domain: "SysContainerDomain-../../../../../../../..\(to.path(percentEncoded: false))", contents: contents, owner: 501, group: 501),
+            //ConcreteFile(path: "", domain: "SysContainerDomain-../../../../../../../../crash_on_purpose", contents: Data()),
         ])
     }
 }

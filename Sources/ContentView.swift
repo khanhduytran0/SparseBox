@@ -33,21 +33,20 @@ struct ContentView: View {
                     }
                 }
                 Section {
-                    Toggle("Action Button", isOn: bindingForMGKey("cT44WE1EohiwRzhsZ8xEsw"))
-                    Toggle("Allow installing iPadOS apps", isOn: bindingForMGKey("9MZ5AdH43csAUajl/dU+IQ", type: [Int].self, defaultValue: [1], enableValue: [1, 2]))
-                    Toggle("Always on Display (18.0+)", isOn: bindingForMGKey("j8/Omm6s1lsmTDFsXjsBfA"))
-                    Toggle("Apple Pencil", isOn: bindingForMGKey("yhHcB0iH0d1XzPO/CFd3ow"))
-                    Toggle("Boot chime", isOn: bindingForMGKey("QHxt+hGLaBPbQJbXiUJX3w"))
-                    Toggle("Camera button (18.0rc+)", isOn: bindingForMGKey("CwvKxM2cEogD3p+HYgaW0Q"))
-                    Toggle("Camera button (enable this too)", isOn: bindingForMGKey("oOV1jhJbdV3AddkcCg0AEA"))
-                    Toggle("Charge limit", isOn: bindingForMGKey("37NVydb//GP/GrhuTN+exg"))
-                    Toggle("Crash Detection (might not work)", isOn: bindingForMGKey("HCzWusHQwZDea6nNhaKndw"))
-                    Toggle("Dynamic Island (17.4+ method)", isOn: bindingForMGKey("YlEtTtHlNesRBMal1CqRaA"))
-                    Toggle("Internal Storage info", isOn: bindingForMGKey("LBJfwOEzExRxzlAnSuI7eg"))
-                    Toggle("Metal HUD for all apps", isOn: bindingForMGKey("EqrsVvjcYDdxHBiQmGhAWw"))
-                    Toggle("Stage Manager", isOn: bindingForMGKey("qeaj75wk3HF4DwQ8qbIi7g"))
+                    Toggle("Action Button", isOn: bindingForMGKeys(["cT44WE1EohiwRzhsZ8xEsw"]))
+                    Toggle("Allow installing iPadOS apps", isOn: bindingForMGKeys(["9MZ5AdH43csAUajl/dU+IQ"], type: [Int].self, defaultValue: [1], enableValue: [1, 2]))
+                    Toggle("Always on Display (18.0+)", isOn: bindingForMGKeys(["j8/Omm6s1lsmTDFsXjsBfA", "2OOJf1VhaM7NxfRok3HbWQ"]))
+                    Toggle("Apple Pencil", isOn: bindingForMGKeys(["yhHcB0iH0d1XzPO/CFd3ow"]))
+                    Toggle("Boot chime", isOn: bindingForMGKeys(["QHxt+hGLaBPbQJbXiUJX3w"]))
+                    Toggle("Camera button (18.0rc+)", isOn: bindingForMGKeys(["CwvKxM2cEogD3p+HYgaW0Q", "oOV1jhJbdV3AddkcCg0AEA"]))
+                    Toggle("Charge limit", isOn: bindingForMGKeys(["37NVydb//GP/GrhuTN+exg"]))
+                    Toggle("Crash Detection (might not work)", isOn: bindingForMGKeys(["HCzWusHQwZDea6nNhaKndw"]))
+                    Toggle("Dynamic Island (17.4+ method)", isOn: bindingForMGKeys(["YlEtTtHlNesRBMal1CqRaA"]))
+                    Toggle("Internal Storage info", isOn: bindingForMGKeys(["LBJfwOEzExRxzlAnSuI7eg"]))
+                    Toggle("Metal HUD for all apps", isOn: bindingForMGKeys(["EqrsVvjcYDdxHBiQmGhAWw"]))
+                    Toggle("Stage Manager", isOn: bindingForMGKeys(["qeaj75wk3HF4DwQ8qbIi7g"]))
                         .disabled(UIDevice.current.userInterfaceIdiom != .pad)
-                    Toggle("Tap to Wake (iPhone SE)", isOn: bindingForMGKey("yZf3GTRMGTuwSV/lD7Cagw"))
+                    Toggle("Tap to Wake (iPhone SE)", isOn: bindingForMGKeys(["yZf3GTRMGTuwSV/lD7Cagw"]))
                 }
                 Section {
                     Toggle("Reboot after finish restoring", isOn: $reboot)
@@ -128,21 +127,23 @@ Thanks to:
         }
     }
     
-    func bindingForMGKey<T: Equatable>(_ key: String, type: T.Type = Int.self, defaultValue: T? = 0, enableValue: T? = 1) -> Binding<Bool> {
+    func bindingForMGKeys<T: Equatable>(_ keys: [String], type: T.Type = Int.self, defaultValue: T? = 0, enableValue: T? = 1) -> Binding<Bool> {
         Binding(
             get: {
-                if let value = (mobileGestalt["CacheExtra"] as! NSMutableDictionary)[key] as? T?, let enableValue {
+                if let value = (mobileGestalt["CacheExtra"] as! NSMutableDictionary)[keys.first!] as? T?, let enableValue {
                     return value == enableValue
                 }
                 return false
             },
             set: { enabled in
                 var cacheExtra = mobileGestalt["CacheExtra"] as! NSMutableDictionary
-                if enabled {
-                    cacheExtra[key] = enableValue
-                } else {
-                    // just remove the key as it will be pulled from device tree if missing
-                    cacheExtra.removeObject(forKey: key)
+                for key in keys {
+                    if enabled {
+                        cacheExtra[key] = enableValue
+                    } else {
+                        // just remove the key as it will be pulled from device tree if missing
+                        cacheExtra.removeObject(forKey: key)
+                    }
                 }
             }
         )

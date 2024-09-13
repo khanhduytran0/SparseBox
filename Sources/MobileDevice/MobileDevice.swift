@@ -1,3 +1,5 @@
+// https://github.com/Lakr233/BBackupp/blob/main/BBackupp/Backend/AppleMobileDevice/AMDManager%2BConnection.swift
+
 import Foundation
 
 class MobileDevice {
@@ -19,13 +21,12 @@ class MobileDevice {
         return Array(deviceIdentifier)
     }
     
-    /*
-    func requireDevice(
+    public static func requireDevice(
         udid: String,
         task: (idevice_t?) -> Void
     ) {
         var device: idevice_t?
-        var ret = idevice_new_with_options(&device, udid, IDEVICE_LOOKUP_NETWORK)
+        let ret = idevice_new_with_options(&device, udid, IDEVICE_LOOKUP_NETWORK)
         guard ret == IDEVICE_E_SUCCESS, let device else {
             task(nil)
             return
@@ -34,23 +35,7 @@ class MobileDevice {
         idevice_free(device)
     }
     
-    func requireMobileBackup2Service(
-        device: idevice_t,
-        mobileBackup2Service: lockdownd_service_descriptor_t,
-        task: (mobilebackup2_client_t?) -> Void
-    ) {
-        var client: mobilebackup2_client_t?
-        guard mobilebackup2_client_new(device, mobileBackup2Service, &client) == MOBILEBACKUP2_E_SUCCESS,
-              let client
-        else {
-            task(nil)
-            return
-        }
-        task(client)
-        mobilebackup2_client_free(client)
-    }
-    
-    func requireLockdownClient(
+    public static func requireLockdownClient(
         device: idevice_t,
         name: String = UUID().uuidString,
         handshake: Bool = true,
@@ -76,7 +61,7 @@ class MobileDevice {
         lockdownd_client_free(client)
     }
     
-    func requireLockdownService(
+    public static func requireLockdownService(
         client: lockdownd_client_t,
         serviceName: String,
         requiresEscrowBag: Bool = false,
@@ -100,8 +85,58 @@ class MobileDevice {
                 return
             }
             task(service)
-            lockdownd_service_descriptor_free(service)
         }
+    }
+    
+    public static func rebootDevice(udid: String) {
+        requireDevice(udid: udid) { device in
+            guard let device else {
+                print("ERROR: Failed to requireDevice()")
+                return
+            }
+            requireLockdownClient(device: device, handshake: true) { lkd_client in
+                guard let lkd_client else {
+                    print("ERROR: Failed to requireLockdownClient()")
+                    return
+                }
+                let serviceName = "com.apple.mobile.diagnostics_relay"
+                requireLockdownService(client: lkd_client, serviceName: serviceName, requiresEscrowBag: false) { lkd_service in
+                    guard let lkd_service else {
+                        print("ERROR: Failed to requireLockdownClient(\(serviceName)")
+                        return
+                    }
+                    var diagnostics_client: diagnostics_relay_client_t?
+                    diagnostics_relay_client_new(device, lkd_service, &diagnostics_client)
+                    guard let diagnostics_client else {
+                        print("ERROR: failed to create diagnostic service")
+                        return
+                    }
+                    print("client \(diagnostics_client)")
+                    //test: guard diagnostics_relay_sleep(diagnostics_client) == DIAGNOSTICS_RELAY_E_SUCCESS else {
+                    guard diagnostics_relay_restart(diagnostics_client, DIAGNOSTICS_RELAY_ACTION_FLAG_WAIT_FOR_DISCONNECT) == DIAGNOSTICS_RELAY_E_SUCCESS else {
+                        print("ERROR: Failed to reboot device")
+                        return
+                    }
+                }
+            }
+        }
+    }
+    
+    /*
+    func requireMobileBackup2Service(
+        device: idevice_t,
+        mobileBackup2Service: lockdownd_service_descriptor_t,
+        task: (mobilebackup2_client_t?) -> Void
+    ) {
+        var client: mobilebackup2_client_t?
+        guard mobilebackup2_client_new(device, mobileBackup2Service, &client) == MOBILEBACKUP2_E_SUCCESS,
+              let client
+        else {
+            task(nil)
+            return
+        }
+        task(client)
+        mobilebackup2_client_free(client)
     }
     
     func requireAppleFileConduitService(
