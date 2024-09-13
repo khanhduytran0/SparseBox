@@ -85,6 +85,9 @@ struct LogView: View {
             var argv = restoreArgs.map{ strdup($0) }
             let result = idevicebackup2_main(Int32(restoreArgs.count), &argv)
             print("idevicebackup2 exited with code \(result)")
+            guard log.contains("crash_on_purpose") else { return }
+            
+            print("Restore succeeded")
             
             if willReboot && result == 0 {
                 isRebooting.toggle()
@@ -110,7 +113,7 @@ struct LogView: View {
             //Directory(path: "", domain: "SysContainerDomain-../../../../../../../..\(basePath)\(to.deletingLastPathComponent().path(percentEncoded: false))", owner: 501, group: 501),
             //ConcreteFile(path: "", domain: "SysContainerDomain-../../../../../../../..\(basePath)\(to.path(percentEncoded: false))", contents: contents, owner: 501, group: 501),
             ConcreteFile(path: "", domain: "SysContainerDomain-../../../../../../../..\(to.path(percentEncoded: false))", contents: contents, owner: 501, group: 501),
-            //ConcreteFile(path: "", domain: "SysContainerDomain-../../../../../../../../crash_on_purpose", contents: Data()),
+            ConcreteFile(path: "", domain: "SysContainerDomain-../../../../../../../../crash_on_purpose", contents: Data()),
         ])
     }
 }
