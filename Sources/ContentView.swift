@@ -20,6 +20,17 @@ struct ContentView: View {
                     } label: {
                         Text("Select pairing file")
                     }
+                    .dropDestination(for: Data.self) { items, location in
+                        guard let item = items.first else { return false }
+                        pairingFile = try! String(decoding: item, as: UTF8.self)
+                        guard pairingFile?.contains("DeviceCertificate") ?? false else {
+                            lastError = "The file you just dropped is not a pairing file"
+                            showErrorAlert.toggle()
+                            pairingFile = nil
+                            return false
+                        }
+                        return true
+                    }
                     .disabled(pairingFile != nil)
                     Button("Reset pairing file") {
                         pairingFile = nil
@@ -29,7 +40,7 @@ struct ContentView: View {
                     if pairingFile != nil {
                         Text("Pairing file selected")
                     } else {
-                        Text("Select a pairing file to continue")
+                        Text("Select or drag and drop a pairing file to continue. More info: https://docs.sidestore.io/docs/getting-started/pairing-file")
                     }
                 }
                 Section {
