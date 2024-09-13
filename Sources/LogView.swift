@@ -6,6 +6,7 @@ struct LogView: View {
     @State var udid: String
     @State var log: String = ""
     @State var ran = false
+    @State var isRebooting = false
     let willReboot: Bool
     let mobileGestaltURL: URL
     var body: some View {
@@ -40,7 +41,7 @@ struct LogView: View {
                 }
             }
         }
-        .navigationTitle("Log output")
+        .navigationTitle(isRebooting ? "Rebooting device" : "Log output")
     }
     
     init(mgURL: URL, reboot: Bool) {
@@ -86,6 +87,7 @@ struct LogView: View {
             print("idevicebackup2 exited with code \(result)")
             
             if willReboot && result == 0 {
+                isRebooting.toggle()
                 MobileDevice.rebootDevice(udid: udid)
             }
             

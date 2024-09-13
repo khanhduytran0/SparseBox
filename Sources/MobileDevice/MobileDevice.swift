@@ -112,11 +112,11 @@ class MobileDevice {
                         return
                     }
                     print("client \(diagnostics_client)")
-                    //test: guard diagnostics_relay_sleep(diagnostics_client) == DIAGNOSTICS_RELAY_E_SUCCESS else {
-                    guard diagnostics_relay_restart(diagnostics_client, DIAGNOSTICS_RELAY_ACTION_FLAG_WAIT_FOR_DISCONNECT) == DIAGNOSTICS_RELAY_E_SUCCESS else {
+                    if diagnostics_relay_restart(diagnostics_client, 0 as! diagnostics_relay_action_t) != DIAGNOSTICS_RELAY_E_SUCCESS {
                         print("ERROR: Failed to reboot device")
-                        return
                     }
+                    diagnostics_relay_goodbye(diagnostics_client)
+                    diagnostics_relay_client_free(diagnostics_client)
                 }
             }
         }
