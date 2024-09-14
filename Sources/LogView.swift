@@ -3,12 +3,12 @@ import SwiftUI
 let logPipe = Pipe()
 
 struct LogView: View {
-    @State var udid: String = "invalid"
+    let udid: String
+    let willReboot: Bool
+    let mobileGestaltURL: URL
     @State var log: String = ""
     @State var ran = false
     @State var isRebooting = false
-    let willReboot: Bool
-    let mobileGestaltURL: URL
     var body: some View {
         NavigationView {
             ScrollViewReader { proxy in
@@ -58,6 +58,7 @@ struct LogView: View {
         let deviceList = MobileDevice.deviceList()
         guard deviceList.count == 1 else {
             print("Invalid device count: \(deviceList.count)")
+            udid = "invalid"
             return
         }
         udid = deviceList.first!
