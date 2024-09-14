@@ -2,6 +2,7 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 struct ContentView: View {
+    let os = ProcessInfo().operatingSystemVersion
     let originalMobileGestalt: URL
     let modifiedMobileGestalt: URL
     @AppStorage("PairingFile") var pairingFile: String?
@@ -15,10 +16,12 @@ struct ContentView: View {
         NavigationStack(path: $path) {
             Form {
                 Section {
-                    Button {
-                        showPairingFileImporter.toggle()
-                    } label: {
-                        Text("Select pairing file")
+                    Button(pairingFile == nil ? "Select pairing file" : "Reset pairing file") {
+                        if pairingFile == nil {
+                            showPairingFileImporter.toggle()
+                        } else {
+                            pairingFile = nil
+                        }
                     }
                     .dropDestination(for: Data.self) { items, location in
                         guard let item = items.first else { return false }
@@ -31,11 +34,6 @@ struct ContentView: View {
                         }
                         return true
                     }
-                    .disabled(pairingFile != nil)
-                    Button("Reset pairing file") {
-                        pairingFile = nil
-                    }
-                    .disabled(pairingFile == nil)
                 } footer: {
                     if pairingFile != nil {
                         Text("Pairing file selected")
@@ -45,19 +43,26 @@ struct ContentView: View {
                 }
                 Section {
                     Toggle("Action Button", isOn: bindingForMGKeys(["cT44WE1EohiwRzhsZ8xEsw"]))
+                        .disabled(requiresVersion(17))
                     Toggle("Allow installing iPadOS apps", isOn: bindingForMGKeys(["9MZ5AdH43csAUajl/dU+IQ"], type: [Int].self, defaultValue: [1], enableValue: [1, 2]))
                     Toggle("Always on Display (18.0+)", isOn: bindingForMGKeys(["j8/Omm6s1lsmTDFsXjsBfA", "2OOJf1VhaM7NxfRok3HbWQ"]))
+                        .disabled(requiresVersion(18))
                     Toggle("Apple Pencil", isOn: bindingForMGKeys(["yhHcB0iH0d1XzPO/CFd3ow"]))
                     Toggle("Boot chime", isOn: bindingForMGKeys(["QHxt+hGLaBPbQJbXiUJX3w"]))
                     Toggle("Camera button (18.0rc+)", isOn: bindingForMGKeys(["CwvKxM2cEogD3p+HYgaW0Q", "oOV1jhJbdV3AddkcCg0AEA"]))
+                        .disabled(requiresVersion(18))
                     Toggle("Charge limit", isOn: bindingForMGKeys(["37NVydb//GP/GrhuTN+exg"]))
+                        .disabled(requiresVersion(17))
                     Toggle("Crash Detection (might not work)", isOn: bindingForMGKeys(["HCzWusHQwZDea6nNhaKndw"]))
                     Toggle("Dynamic Island (17.4+ method)", isOn: bindingForMGKeys(["YlEtTtHlNesRBMal1CqRaA"]))
+                        .disabled(requiresVersion(17, 4))
                     Toggle("Internal Storage info", isOn: bindingForMGKeys(["LBJfwOEzExRxzlAnSuI7eg"]))
                     Toggle("Metal HUD for all apps", isOn: bindingForMGKeys(["EqrsVvjcYDdxHBiQmGhAWw"]))
                     Toggle("Stage Manager", isOn: bindingForMGKeys(["qeaj75wk3HF4DwQ8qbIi7g"]))
                         .disabled(UIDevice.current.userInterfaceIdiom != .pad)
-                    Toggle("Tap to Wake (iPhone SE)", isOn: bindingForMGKeys(["yZf3GTRMGTuwSV/lD7Cagw"]))
+                    if let isSE = UIDevice.perform(Selector("_hasHomeButton")) {
+                        Toggle("Tap to Wake (iPhone SE)", isOn: bindingForMGKeys(["yZf3GTRMGTuwSV/lD7Cagw"]))
+                    }
                 }
                 Section {
                     Toggle("Reboot after finish restoring", isOn: $reboot)
@@ -172,5 +177,12 @@ Thanks to:
             lastError = error.localizedDescription
             showErrorAlert.toggle()
         }
+    }
+    
+    func requiresVersion(_ major : Int, _ minor: Int = 0, _ patch: Int = 0) -> Bool {
+        // XXYYZZ: major XX, minor YY, patch ZZ
+        let requiredVersion = major*10000 + minor*100 + patch
+        let currentVersion = os.majorVersion*10000 + os.minorVersion*100 + os.patchVersion
+        return currentVersion < requiredVersion
     }
 }
