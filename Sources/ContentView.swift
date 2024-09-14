@@ -1,6 +1,12 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
+extension UIDocumentPickerViewController {
+    @objc func fix_init(forOpeningContentTypes contentTypes: [UTType], asCopy: Bool) -> UIDocumentPickerViewController {
+        return fix_init(forOpeningContentTypes: contentTypes, asCopy: true)
+    }
+}
+
 struct ContentView: View {
     let os = ProcessInfo().operatingSystemVersion
     let originalMobileGestalt: URL
@@ -32,6 +38,7 @@ struct ContentView: View {
                             pairingFile = nil
                             return false
                         }
+                        startMinimuxer()
                         return true
                     }
                 } footer: {
@@ -90,11 +97,7 @@ Thanks to:
             .fileImporter(isPresented: $showPairingFileImporter, allowedContentTypes: [UTType(filenameExtension: "mobiledevicepairing", conformingTo: .data)!], onCompletion: { result in
                 switch result {
                 case .success(let url):
-                    guard url.startAccessingSecurityScopedResource() else {
-                        return
-                    }
                     pairingFile = try! String(contentsOf: url)
-                    url.stopAccessingSecurityScopedResource()
                     startMinimuxer()
                 case .failure(let error):
                     lastError = error.localizedDescription
@@ -131,7 +134,12 @@ Thanks to:
             try! FileManager.default.copyItem(at: url, to: originalMobileGestalt)
             try! FileManager.default.copyItem(at: url, to: modifiedMobileGestalt)
         }
-        mobileGestalt = try! NSMutableDictionary(contentsOf: modifiedMobileGestalt, error: ())
+        _mobileGestalt = State(initialValue: try! NSMutableDictionary(contentsOf: modifiedMobileGestalt, error: ()))
+        
+        // Fix file picker
+        let fixMethod = class_getInstanceMethod(UIDocumentPickerViewController.self, Selector("fix_initForOpeningContentTypes:asCopy:"))!
+        let origMethod = class_getInstanceMethod(UIDocumentPickerViewController.self, Selector("initForOpeningContentTypes:asCopy:"))!
+        method_exchangeImplementations(origMethod, fixMethod)
     }
     
     func applyChanges() {
@@ -152,7 +160,7 @@ Thanks to:
                 return false
             },
             set: { enabled in
-                var cacheExtra = mobileGestalt["CacheExtra"] as! NSMutableDictionary
+                let cacheExtra = mobileGestalt["CacheExtra"] as! NSMutableDictionary
                 for key in keys {
                     if enabled {
                         cacheExtra[key] = enableValue
