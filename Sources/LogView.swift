@@ -5,7 +5,7 @@ let logPipe = Pipe()
 struct LogView: View {
     let udid: String
     let willReboot: Bool
-    let mobileGestaltURL: URL
+    let mbdb: Backup
     @State var log: String = ""
     @State var ran = false
     @State var isRebooting = false
@@ -44,7 +44,7 @@ struct LogView: View {
         .navigationTitle(isRebooting ? "Rebooting device" : "Log output")
     }
     
-    init(mgURL: URL, reboot: Bool) {
+    init(mbdb: Backup, reboot: Bool) {
         setvbuf(stdout, nil, _IOLBF, 0) // make stdout line-buffered
         setvbuf(stderr, nil, _IONBF, 0) // make stderr unbuffered
         
@@ -52,8 +52,8 @@ struct LogView: View {
         dup2(logPipe.fileHandleForWriting.fileDescriptor, fileno(stdout))
         dup2(logPipe.fileHandleForWriting.fileDescriptor, fileno(stderr))
         
-        mobileGestaltURL = mgURL
-        willReboot = reboot
+        self.mbdb = mbdb
+        self.willReboot = reboot
         
         let deviceList = MobileDevice.deviceList()
         guard deviceList.count == 1 else {
@@ -71,8 +71,6 @@ struct LogView: View {
         do {
             try? FileManager.default.removeItem(at: folder)
             try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: false)
-            
-            let mbdb = createBackupFile(from: mobileGestaltURL, to: URL(filePath: "/var/containers/Shared/SystemGroup/systemgroup.com.apple.mobilegestaltcache/Library/Caches/com.apple.MobileGestalt.plist"))
             try mbdb.writeTo(directory: folder)
             
             // Restore now
@@ -101,19 +99,5 @@ struct LogView: View {
         }
     }
     
-    func createBackupFile(from: URL, to: URL) -> Backup {
-        // open the file and read the contents
-        let contents = try! Data(contentsOf: from)
-        
-        // required on iOS 17.0+ since /var/mobile is on a separate partition
-        let basePath = to.path(percentEncoded: false).hasPrefix("/var/mobile/") ? "/var/mobile/backup" : "/var/backup"
-        
-        // create the backup
-        return Backup(files: [
-            //Directory(path: "", domain: "SysContainerDomain-../../../../../../../..\(basePath)\(to.deletingLastPathComponent().path(percentEncoded: false))", owner: 501, group: 501),
-            //ConcreteFile(path: "", domain: "SysContainerDomain-../../../../../../../..\(basePath)\(to.path(percentEncoded: false))", contents: contents, owner: 501, group: 501),
-            ConcreteFile(path: "", domain: "SysContainerDomain-../../../../../../../..\(to.path(percentEncoded: false))", contents: contents, owner: 501, group: 501),
-            ConcreteFile(path: "", domain: "SysContainerDomain-../../../../../../../../crash_on_purpose", contents: Data()),
-        ])
-    }
+    
 }

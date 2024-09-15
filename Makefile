@@ -36,6 +36,7 @@ SparseBox_FILES = \
   include/SwiftBridgeCore.swift \
   Sources/SparseRestore/MBDB.swift \
   Sources/SparseRestore/Backup.swift \
+  Sources/SparseRestore/Restore.swift \
   Sources/LogView.swift \
   Sources/MyApp.swift \
   Sources/MobileDevice/MobileDevice.swift \

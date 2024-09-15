@@ -9,8 +9,7 @@ extension UIDocumentPickerViewController {
 
 struct ContentView: View {
     let os = ProcessInfo().operatingSystemVersion
-    let originalMobileGestalt: URL
-    let modifiedMobileGestalt: URL
+    let origMGURL, modMGURL: URL
     @AppStorage("PairingFile") var pairingFile: String?
     @State var mobileGestalt: NSMutableDictionary
     @State var reboot = true
@@ -74,13 +73,13 @@ struct ContentView: View {
                 Section {
                     Toggle("Reboot after finish restoring", isOn: $reboot)
                     Button("Apply changes") {
-                        try! mobileGestalt.write(to: modifiedMobileGestalt)
+                        try! mobileGestalt.write(to: modMGURL)
                         applyChanges()
                     }
                     Button("Reset changes") {
-                        try! FileManager.default.removeItem(at: modifiedMobileGestalt)
-                        try! FileManager.default.copyItem(at: originalMobileGestalt, to: modifiedMobileGestalt)
-                        mobileGestalt = try! NSMutableDictionary(contentsOf: modifiedMobileGestalt, error: ())
+                        try! FileManager.default.removeItem(at: modMGURL)
+                        try! FileManager.default.copyItem(at: origMGURL, to: modMGURL)
+                        mobileGestalt = try! NSMutableDictionary(contentsOf: modMGURL, error: ())
                         applyChanges()
                     }
                 } footer: {
@@ -111,7 +110,8 @@ Thanks to:
             }
             .navigationDestination(for: String.self) { view in
                 if view == "ApplyChanges" {
-                    LogView(mgURL: modifiedMobileGestalt, reboot: reboot)
+                    let mbdb = Restore.createBackupFiles(files: generateFilesToRestore())
+                    LogView(mbdb: mbdb, reboot: reboot)
                 }
             }
             .navigationTitle("SparseBox")
@@ -127,14 +127,14 @@ Thanks to:
     
     init() {
         let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        originalMobileGestalt = documentsDirectory.appendingPathComponent("OriginalMobileGestalt.plist", conformingTo: .data)
-        modifiedMobileGestalt = documentsDirectory.appendingPathComponent("ModifiedMobileGestalt.plist", conformingTo: .data)
-        if !FileManager.default.fileExists(atPath: originalMobileGestalt.path) {
+        origMGURL = documentsDirectory.appendingPathComponent("OriginalMobileGestalt.plist", conformingTo: .data)
+        modMGURL = documentsDirectory.appendingPathComponent("ModifiedMobileGestalt.plist", conformingTo: .data)
+        if !FileManager.default.fileExists(atPath: origMGURL.path) {
             let url = URL(filePath: "/var/containers/Shared/SystemGroup/systemgroup.com.apple.mobilegestaltcache/Library/Caches/com.apple.MobileGestalt.plist")
-            try! FileManager.default.copyItem(at: url, to: originalMobileGestalt)
-            try! FileManager.default.copyItem(at: url, to: modifiedMobileGestalt)
+            try! FileManager.default.copyItem(at: url, to: origMGURL)
+            try! FileManager.default.copyItem(at: url, to: modMGURL)
         }
-        _mobileGestalt = State(initialValue: try! NSMutableDictionary(contentsOf: modifiedMobileGestalt, error: ()))
+        _mobileGestalt = State(initialValue: try! NSMutableDictionary(contentsOf: modMGURL, error: ()))
         
         // Fix file picker
         let fixMethod = class_getInstanceMethod(UIDocumentPickerViewController.self, Selector("fix_initForOpeningContentTypes:asCopy:"))!
@@ -171,6 +171,12 @@ Thanks to:
                 }
             }
         )
+    }
+    
+    func generateFilesToRestore() -> [FileToRestore] {
+        return [
+            FileToRestore(from: modMGURL, to: URL(filePath: "/var/containers/Shared/SystemGroup/systemgroup.com.apple.mobilegestaltcache/Library/Caches/NOT.apple.MobileGestalt.plist"), owner: 501, group: 501)
+        ]
     }
     
     func startMinimuxer() {
