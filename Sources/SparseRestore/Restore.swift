@@ -1,10 +1,19 @@
 import Foundation
 
 class FileToRestore {
-    var from, to: URL
+    var contents: Data
+    var to: URL
     var owner, group: Int32
+    
     init(from: URL, to: URL, owner: Int32 = 0, group: Int32 = 0) {
-        self.from = from
+        self.contents = try! Data(contentsOf: from)
+        self.to = to
+        self.owner = owner
+        self.group = group
+    }
+    
+    init(contents: Data, to: URL, owner: Int32 = 0, group: Int32 = 0) {
+        self.contents = contents
         self.to = to
         self.owner = owner
         self.group = group
@@ -22,11 +31,10 @@ struct Restore {
         
         // create the links
         for (index, file) in files.enumerated() {
-            let contents = try! Data(contentsOf: file.from)
             filesList.append(ConcreteFile(
                 path: "Library/Preferences/temp\(index)",
                 domain: "RootDomain",
-                contents: contents,
+                contents: file.contents,
                 owner: file.owner,
                 group: file.group,
                 inode: UInt64(index)))
