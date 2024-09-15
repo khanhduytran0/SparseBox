@@ -80,20 +80,14 @@ struct ContentView: View {
                         try! mobileGestalt.write(to: modMGURL)
                         applyChanges()
                     }
-                    .disabled(!minimuxerReady)
                     Button("Reset changes") {
                         try! FileManager.default.removeItem(at: modMGURL)
                         try! FileManager.default.copyItem(at: origMGURL, to: modMGURL)
                         mobileGestalt = try! NSMutableDictionary(contentsOf: modMGURL, error: ())
                         applyChanges()
                     }
-                    .disabled(!minimuxerReady)
                 } footer: {
                     VStack {
-                        if !minimuxerReady {
-                            Text("Waiting for minimuxer. Ensure you have WiFi and WireGuard VPN set up.")
-                            Spacer()
-                        }
                         Text("""
 A terrible app by @khanhduytran0. Use it at your own risk.
 Thanks to:
@@ -134,17 +128,6 @@ Thanks to:
                 pairingFile = altPairingFile
             }
             startMinimuxer()
-            DispatchQueue.global(qos: .background).async {
-                let runLoop = CFRunLoopGetCurrent()
-                Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { timer in
-                    if ready() {
-                        timer.invalidate()
-                        CFRunLoopStop(runLoop)
-                        minimuxerReady = true
-                    }
-                }
-                CFRunLoopRun()
-            }
         }
     }
     
@@ -167,7 +150,12 @@ Thanks to:
     }
     
     func applyChanges() {
-        path.append("ApplyChanges")
+        if ready() {
+            path.append("ApplyChanges")
+        } else {
+            lastError = "minimuxer is not ready. Ensure you have WiFi and WireGuard VPN set up."
+            showErrorAlert.toggle()
+        }
     }
     
     func bindingForAppleIntelligence() -> Binding<Bool> {
@@ -226,6 +214,7 @@ Thanks to:
         guard pairingFile != nil else {
             return
         }
+        // set USBMUXD_SOCKET_ADDRESS
         target_minimuxer_address()
         do {
             let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].absoluteString
