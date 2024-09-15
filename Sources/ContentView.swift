@@ -76,7 +76,7 @@ struct ContentView: View {
                 }
                 Section {
                     Toggle("Reboot after finish restoring", isOn: $reboot)
-                    Button(minimuxerReady ? "Apply changes" : "Waiting for minimuxer. Ensure WiFi and WireGuard is enabled.") {
+                    Button("Apply changes") {
                         try! mobileGestalt.write(to: modMGURL)
                         applyChanges()
                     }
@@ -89,7 +89,12 @@ struct ContentView: View {
                     }
                     .disabled(!minimuxerReady)
                 } footer: {
-                    Text("""
+                    VStack {
+                        if !minimuxerReady {
+                            Text("Waiting for minimuxer. Ensure you have WiFi and WireGuard VPN set up.")
+                            Spacer()
+                        }
+                        Text("""
 A terrible app by @khanhduytran0. Use it at your own risk.
 Thanks to:
 @SideStore: em_proxy and minimuxer
@@ -97,6 +102,7 @@ Thanks to:
 @PoomSmart: MobileGestalt dump
 @libimobiledevice
 """)
+                    }
                 }
             }
             .fileImporter(isPresented: $showPairingFileImporter, allowedContentTypes: [UTType(filenameExtension: "mobiledevicepairing", conformingTo: .data)!], onCompletion: { result in
@@ -128,11 +134,16 @@ Thanks to:
                 pairingFile = altPairingFile
             }
             startMinimuxer()
-            Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { timer in
-                if ready() {
-                    timer.invalidate()
-                    minimuxerReady = true
+            DispatchQueue.global(qos: .background).async {
+                let runLoop = CFRunLoopGetCurrent()
+                Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { timer in
+                    if ready() {
+                        timer.invalidate()
+                        CFRunLoopStop(runLoop)
+                        minimuxerReady = true
+                    }
                 }
+                CFRunLoopRun()
             }
         }
     }
