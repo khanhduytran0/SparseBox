@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>OS_ELIGIBILITY_DOMAIN_CALCIUM</key>
+	<dict>
+		<key>os_eligibility_answer_source_t</key>
+		<integer>1</integer>
+		<key>os_eligibility_answer_t</key>
+		<integer>2</integer>
+		<key>status</key>
+		<dict>
+			<key>OS_ELIGIBILITY_INPUT_CHINA_CELLULAR</key>
+			<integer>2</integer>
+		</dict>
+	</dict>
+	<key>OS_ELIGIBILITY_DOMAIN_GREYMATTER</key>
+	<dict>
+		<key>context</key>
+		<dict>
+			<key>OS_ELIGIBILITY_CONTEXT_ELIGIBLE_DEVICE_LANGUAGES</key>
+			<array>
+				<string>en</string>
+			</array>
+		</dict>
+		<key>os_eligibility_answer_source_t</key>
+		<integer>1</integer>
+		<key>os_eligibility_answer_t</key>
+		<integer>4</integer>
+		<key>status</key>
+		<dict>
+			<key>OS_ELIGIBILITY_INPUT_DEVICE_LANGUAGE</key>
+			<integer>3</integer>
+			<key>OS_ELIGIBILITY_INPUT_DEVICE_REGION_CODE</key>
+			<integer>3</integer>
+			<key>OS_ELIGIBILITY_INPUT_EXTERNAL_BOOT_DRIVE</key>
+			<integer>3</integer>
+			<key>OS_ELIGIBILITY_INPUT_GENERATIVE_MODEL_SYSTEM</key>
+			<integer>3</integer>
+			<key>OS_ELIGIBILITY_INPUT_SHARED_IPAD</key>
+			<integer>3</integer>
+			<key>OS_ELIGIBILITY_INPUT_SIRI_LANGUAGE</key>
+			<integer>3</integer>
+		</dict>
+	</dict>
+</dict>
+</plist>
