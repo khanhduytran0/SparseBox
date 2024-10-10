@@ -4,5 +4,13 @@
 #include "libimobiledevice/libimobiledevice.h"
 #include "libimobiledevice/diagnostics_relay.h"
 #include "libimobiledevice/mobilebackup2.h"
+#include "libimobiledevice/debugserver.h"
+#include "libimobiledevice/heartbeat.h"
+#include "libimobiledevice/installation_proxy.h"
+#include "libimobiledevice/lockdown.h"
+#include "libimobiledevice/mobile_image_mounter.h"
+#include "libimobiledevice/sbservices.h"
+#include "libimobiledevice/service.h"
+#include "libimobiledevice-glue/utils.h"
 
 int idevicebackup2_main(int argc, char *argv[]);
