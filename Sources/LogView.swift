@@ -83,13 +83,15 @@ struct LogView: View {
             var argv = restoreArgs.map{ strdup($0) }
             let result = idevicebackup2_main(Int32(restoreArgs.count), &argv)
             print("idevicebackup2 exited with code \(result)")
-            guard log.contains("crash_on_purpose") else { return }
             
-            print("Restore succeeded")
-            
-            if willReboot && result == 0 {
-                isRebooting.toggle()
-                MobileDevice.rebootDevice(udid: udid)
+            if log.contains("Domain name cannot contain a slash") {
+                print("ERROR: this iOS version is not supported.")
+            } else if log.contains("crash_on_purpose") {
+                print("Restore succeeded")
+                if willReboot && result == 0 {
+                    isRebooting.toggle()
+                    MobileDevice.rebootDevice(udid: udid)
+                }
             }
             
             logPipe.fileHandleForReading.readabilityHandler = nil

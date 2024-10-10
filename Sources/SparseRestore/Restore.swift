@@ -35,8 +35,9 @@ struct Restore {
             guard !bundleID.isEmpty,
                   let value = value.value as? [String: AnyCodable],
                   let bundlePath = value["Path"]?.value as? String,
-                  // Note: this only works for AltStore/SideStore, need another method for Sideloadly
-                  bundlePath.hasSuffix("/App.app")
+                  // Find all apps containing mobileprovision
+                  // while this is not 100% accurate, it ensures this is applied to all sideloaded apps
+                  access(bundlePath.appending("/embedded.mobileprovision"), F_OK) == 0
             else { continue }
             print("Found \(bundleID): \(bundlePath)")
             files.append(Directory(

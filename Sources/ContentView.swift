@@ -101,6 +101,8 @@ struct ContentView: View {
                         testBypassAppLimit()
                     }
                     .disabled(taskRunning)
+                } footer: {
+                    Text("Hide free developer apps from installd, so you could install more than 3 apps. You need to apply this for each 3 apps you install or update.")
                 }
                 Section {
                     Toggle("Reboot after finish restoring", isOn: $reboot)
