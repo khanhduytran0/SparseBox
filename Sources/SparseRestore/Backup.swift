@@ -6,9 +6,11 @@ let MODE_DEFAULT = S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IXGRP | S_IROTH | S
 class BackupFile {
     var path: String
     var domain: String
-    init(path: String, domain: String) {
+    var xattrs: [String : String]
+    init(path: String, domain: String, xattrs: [String : String]) {
         self.path = path
         self.domain = domain
+        self.xattrs = xattrs
     }
 
     public func toRecord() -> MBDBRecord {
@@ -23,13 +25,13 @@ class ConcreteFile: BackupFile {
     var inode: UInt64?
     var mode: UInt16
     
-    init(path: String, domain: String, contents: Data, owner: Int32 = 0, group: Int32 = 0, inode: UInt64? = nil, mode: UInt16 = MODE_DEFAULT) {
+    init(path: String, domain: String, contents: Data, owner: Int32 = 0, group: Int32 = 0, inode: UInt64? = nil, mode: UInt16 = MODE_DEFAULT, xattrs: [String : String] = [:]) {
         self.contents = contents
         self.owner = owner
         self.group = group
         self.inode = inode
         self.mode = mode
-        super.init(path: path, domain: domain)
+        super.init(path: path, domain: domain, xattrs: xattrs)
     }
     
     override public func toRecord() -> MBDBRecord {
@@ -49,7 +51,7 @@ class ConcreteFile: BackupFile {
             ctime: time,
             size: UInt64(contents.count),
             flags: 4,
-            properties: [:])
+            properties: xattrs)
     }
 }
 
@@ -60,13 +62,13 @@ class SymbolicLink: BackupFile {
     var inode: UInt64?
     var mode: UInt16
     
-    init(path: String, domain: String, target: String, owner: Int32 = 0, group: Int32 = 0, inode: UInt64? = nil, mode: UInt16 = MODE_DEFAULT) {
+    init(path: String, domain: String, target: String, owner: Int32 = 0, group: Int32 = 0, inode: UInt64? = nil, mode: UInt16 = MODE_DEFAULT, xattrs: [String : String] = [:]) {
         self.target = target
         self.owner = owner
         self.group = group
         self.inode = inode
         self.mode = mode
-        super.init(path: path, domain: domain)
+        super.init(path: path, domain: domain, xattrs: xattrs)
     }
     
     override public func toRecord() -> MBDBRecord {
@@ -86,7 +88,7 @@ class SymbolicLink: BackupFile {
             ctime: time,
             size: 0,
             flags: 4,
-            properties: [:])
+            properties: xattrs)
     }
 }
 
@@ -95,11 +97,11 @@ class Directory: BackupFile {
     var group: Int32
     var mode: UInt16
     
-    init(path: String, domain: String, owner: Int32 = 0, group: Int32 = 0, mode: UInt16 = MODE_DEFAULT) {
+    init(path: String, domain: String, owner: Int32 = 0, group: Int32 = 0, mode: UInt16 = MODE_DEFAULT, xattrs: [String : String] = [:]) {
         self.owner = owner
         self.group = group
         self.mode = mode
-        super.init(path: path, domain: domain)
+        super.init(path: path, domain: domain, xattrs: xattrs)
     }
     
     override public func toRecord() -> MBDBRecord {
@@ -119,7 +121,7 @@ class Directory: BackupFile {
             ctime: time,
             size: 0,
             flags: 4,
-            properties: [:])
+            properties: xattrs)
     }
 }
 

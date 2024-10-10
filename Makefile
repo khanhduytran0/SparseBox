@@ -34,6 +34,9 @@ SparseBox_FILES = \
   include/minimuxer.swift \
   include/em_proxy.swift \
   include/SwiftBridgeCore.swift \
+  Sources/AnyCodable/AnyCodable.swift \
+  Sources/AnyCodable/AnyDecodable.swift \
+  Sources/AnyCodable/AnyEncodable.swift \
   Sources/SparseRestore/MBDB.swift \
   Sources/SparseRestore/Backup.swift \
   Sources/SparseRestore/Restore.swift \

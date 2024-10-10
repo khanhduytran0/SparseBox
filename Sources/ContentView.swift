@@ -11,6 +11,7 @@ struct ContentView: View {
     let os = ProcessInfo().operatingSystemVersion
     let origMGURL, modMGURL, featFlagsURL: URL
     @AppStorage("PairingFile") var pairingFile: String?
+    @State var mbdb: Backup?
     @State var eligibilityData = Data()
     @State var featureFlagsData = Data()
     @State var mobileGestalt: NSMutableDictionary
@@ -19,6 +20,7 @@ struct ContentView: View {
     @State var reboot = true
     @State var showPairingFileImporter = false
     @State var showErrorAlert = false
+    @State var taskRunning = false
     @State var lastError: String?
     @State var path = NavigationPath()
     var body: some View {
@@ -95,18 +97,26 @@ struct ContentView: View {
                     Text("Only change device model if you're downloading Apple Intelligence models. Face ID may break.")
                 }
                 Section {
+                    Button("Bypass 3 app limit") {
+                        testBypassAppLimit()
+                    }
+                    .disabled(taskRunning)
+                }
+                Section {
                     Toggle("Reboot after finish restoring", isOn: $reboot)
                     Button("Apply changes") {
                         saveProductType()
                         try! mobileGestalt.write(to: modMGURL)
                         applyChanges()
                     }
+                    .disabled(taskRunning)
                     Button("Reset changes") {
                         try! FileManager.default.removeItem(at: modMGURL)
                         try! FileManager.default.copyItem(at: origMGURL, to: modMGURL)
                         mobileGestalt = try! NSMutableDictionary(contentsOf: modMGURL, error: ())
                         applyChanges()
                     }
+                    .disabled(taskRunning)
                 } footer: {
                     VStack {
                         Text("""
@@ -115,6 +125,7 @@ Thanks to:
 @SideStore: em_proxy and minimuxer
 @JJTech0130: SparseRestore and backup exploit
 @PoomSmart: MobileGestalt dump
+@Lakr233: BBackupp
 @libimobiledevice
 """)
                     }
@@ -137,8 +148,9 @@ Thanks to:
             }
             .navigationDestination(for: String.self) { view in
                 if view == "ApplyChanges" {
-                    let mbdb = Restore.createBackupFiles(files: generateFilesToRestore())
-                    LogView(mbdb: mbdb, reboot: reboot)
+                    LogView(mbdb: mbdb!, reboot: reboot)
+                } else if view == "BypassAppLimit" {
+                    LogView(mbdb: mbdb!, reboot: false)
                 }
             }
             .navigationTitle("SparseBox")
@@ -173,9 +185,27 @@ Thanks to:
         method_exchangeImplementations(origMethod, fixMethod)
     }
     
+    func testBypassAppLimit() {
+        if ready() {
+            Task {
+                taskRunning = true
+                mbdb = Restore.createBypassAppLimit()
+                taskRunning = false
+                path.append("BypassAppLimit")
+            }
+        } else {
+            lastError = "minimuxer is not ready. Ensure you have WiFi and WireGuard VPN set up."
+            showErrorAlert.toggle()
+        }
+    }
+    
     func applyChanges() {
         if ready() {
-            path.append("ApplyChanges")
+            Task {
+                mbdb = Restore.createBackupFiles(files: generateFilesToRestore())
+                taskRunning = false
+                path.append("ApplyChanges")
+            }
         } else {
             lastError = "minimuxer is not ready. Ensure you have WiFi and WireGuard VPN set up."
             showErrorAlert.toggle()

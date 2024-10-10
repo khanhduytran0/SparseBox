@@ -21,6 +21,37 @@ class FileToRestore {
 }
 
 struct Restore {
+    static func createBypassAppLimit() -> Backup {
+        let deviceList = MobileDevice.deviceList()
+        guard deviceList.count == 1 else {
+            print("Invalid device count: \(deviceList.count)")
+            return Backup(files: [])
+        }
+        let udid = deviceList.first!
+        let apps = MobileDevice.listApplications(udid: udid)
+        
+        var files = [BackupFile]()
+        for (bundleID, value) in apps! {
+            guard !bundleID.isEmpty,
+                  let value = value.value as? [String: AnyCodable],
+                  let bundlePath = value["Path"]?.value as? String,
+                  // Note: this only works for AltStore/SideStore, need another method for Sideloadly
+                  bundlePath.hasSuffix("/App.app")
+            else { continue }
+            print("Found \(bundleID): \(bundlePath)")
+            files.append(Directory(
+                path: "",
+                domain: "SysContainerDomain-../../../../../../../..\(bundlePath.hasPrefix("/private/") ? String(bundlePath.dropFirst(8)) : bundlePath)",
+                owner: 33,
+                group: 33,
+                xattrs: ["com.apple.installd.validatedByFreeProfile": ""]
+            ))
+        }
+        
+        files.append(ConcreteFile(path: "", domain: "SysContainerDomain-../../../../../../../../crash_on_purpose", contents: Data()))
+        return Backup(files: files)
+    }
+    
     static func createBackupFiles(files: [FileToRestore]) -> Backup {
         // create the files to be backed up
         var filesList : [BackupFile] = [
