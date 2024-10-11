@@ -54,6 +54,14 @@ struct ContentView: View {
                     }
                 }
                 Section {
+                    Button("Bypass 3 app limit") {
+                        testBypassAppLimit()
+                    }
+                    .disabled(taskRunning)
+                } footer: {
+                    Text("Hide free developer apps from installd, so you could install more than 3 apps. You need to apply this for each 3 apps you install or update.")
+                }
+                Section {
                     Toggle("Action Button", isOn: bindingForMGKeys(["cT44WE1EohiwRzhsZ8xEsw"]))
                         .disabled(requiresVersion(17))
                     Toggle("Allow installing iPadOS apps", isOn: bindingForMGKeys(["9MZ5AdH43csAUajl/dU+IQ"], type: [Int].self, defaultValue: [1], enableValue: [1, 2]))
@@ -97,12 +105,12 @@ struct ContentView: View {
                     Text("Only change device model if you're downloading Apple Intelligence models. Face ID may break.")
                 }
                 Section {
-                    Button("Bypass 3 app limit") {
-                        testBypassAppLimit()
-                    }
-                    .disabled(taskRunning)
+                    let cacheExtra = mobileGestalt["CacheExtra"] as! NSMutableDictionary
+                    Toggle("Become iPadOS", isOn: bindingForTrollPad())
+                    // validate DeviceClass
+                        .disabled(cacheExtra["+3Uf0Pm5F8Xy7Onyvko0vA"] as! String != "iPhone")
                 } footer: {
-                    Text("Hide free developer apps from installd, so you could install more than 3 apps. You need to apply this for each 3 apps you install or update.")
+                    Text("Override user interface idiom to iPadOS, so you could use all iPadOS multitasking features on iPhone. Gives you the same capabilities as TrollPad, but may cause some issues.")
                 }
                 Section {
                     Toggle("Reboot after finish restoring", isOn: $reboot)
@@ -227,7 +235,6 @@ Thanks to:
             set: { enabled in
                 if enabled {
                     eligibilityData = try! Data(contentsOf: Bundle.main.url(forResource: "eligibility", withExtension: "plist")!)
-                    cacheExtra[key] = 1
                     featureFlagsData = try! Data(contentsOf: Bundle.main.url(forResource: "FeatureFlags_Global", withExtension: "plist")!)
                     cacheExtra[key] = 1
                 } else {
@@ -235,6 +242,43 @@ Thanks to:
                     eligibilityData = featureFlagsData
                     // just remove the key as it will be pulled from device tree if missing
                     cacheExtra.removeObject(forKey: key)
+                }
+            }
+        )
+    }
+    
+    func bindingForTrollPad() -> Binding<Bool> {
+        // We're going to overwrite DeviceClassNumber but we can't do it via CacheExtra, so we need to do it via CacheData instead
+        // However, CacheData is still a black box, as nobody has yet to document this data, so we're leaving a hardcoded offset for now
+        let valueOffset = 0x2e0
+        let cacheData = mobileGestalt["CacheData"] as! NSMutableData
+        //print("Read value from \(cacheData.mutableBytes.load(fromByteOffset: valueOffset, as: Int.self))")
+        
+        let cacheExtra = mobileGestalt["CacheExtra"] as! NSMutableDictionary
+        let keys = [
+            "uKc7FPnEO++lVhHWHFlGbQ", // ipad
+            "mG0AnH/Vy1veoqoLRAIgTA", // MedusaFloatingLiveAppCapability
+            "UCG5MkVahJxG1YULbbd5Bg", // MedusaOverlayAppCapability
+            "ZYqko/XM5zD3XBfN5RmaXA", // MedusaPinnedAppCapability
+            "nVh/gwNpy7Jv1NOk00CMrw", // MedusaPIPCapability,
+            "qeaj75wk3HF4DwQ8qbIi7g", // DeviceSupportsEnhancedMultitasking
+        ]
+        return Binding(
+            get: {
+                if let value = cacheExtra[keys.first!] as? Int? {
+                    return value == 1
+                }
+                return false
+            },
+            set: { enabled in
+                cacheData.mutableBytes.storeBytes(of: enabled ? 3 : 1, toByteOffset: valueOffset, as: Int.self)
+                for key in keys {
+                    if enabled {
+                        cacheExtra[key] = 1
+                    } else {
+                        // just remove the key as it will be pulled from device tree if missing
+                        cacheExtra.removeObject(forKey: key)
+                    }
                 }
             }
         )
