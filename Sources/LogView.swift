@@ -84,10 +84,11 @@ struct LogView: View {
             let result = idevicebackup2_main(Int32(restoreArgs.count), &argv)
             print("idevicebackup2 exited with code \(result)")
             
+            log.append("\n")
             if log.contains("Domain name cannot contain a slash") {
-                print("ERROR: this iOS version is not supported.")
+                log.append("Result: this iOS version is not supported.")
             } else if log.contains("crash_on_purpose") {
-                print("Restore succeeded")
+                log.append("Result: restore successful.")
                 if willReboot && result == 0 {
                     isRebooting.toggle()
                     MobileDevice.rebootDevice(udid: udid)
