@@ -14,8 +14,8 @@ libEMProxy_FRAMEWORKS = Security
 libEMProxy_INSTALL_PATH = /Applications/$(APPLICATION_NAME).app/Frameworks
 
 # libimobiledevice + minimuxer
-libimobiledevice_FILES = idevicebackup2.c
-libimobiledevice_CFLAGS = -Iinclude
+libimobiledevice_FILES = idevicebackup2.c FindCacheDataOffset.m
+libimobiledevice_CFLAGS = -Iinclude -fobjc-arc
 libimobiledevice_LDFLAGS = \
   -force_load lib/libimobiledevice-1.0.a \
   -force_load lib/libimobiledevice-glue-1.0.a \

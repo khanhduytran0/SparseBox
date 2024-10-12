@@ -251,7 +251,7 @@ Thanks to:
     func bindingForTrollPad() -> Binding<Bool> {
         // We're going to overwrite DeviceClassNumber but we can't do it via CacheExtra, so we need to do it via CacheData instead
         // However, CacheData is still a black box, as nobody has yet to document this data, so we're leaving a hardcoded offset for now
-        let valueOffset = 0x2e0
+        let valueOffset = UserDefaults.standard.integer(forKey: "MGCacheDataDeviceClassNumberOffset")
         let cacheData = mobileGestalt["CacheData"] as! NSMutableData
         //print("Read value from \(cacheData.mutableBytes.load(fromByteOffset: valueOffset, as: Int.self))")
         
