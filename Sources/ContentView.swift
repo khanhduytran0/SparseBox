@@ -196,29 +196,30 @@ Thanks to:
     }
     
     func testBypassAppLimit() {
-        if ready() {
-            Task {
-                taskRunning = true
+        Task {
+            taskRunning = true
+            if ready() {
                 mbdb = Restore.createBypassAppLimit()
-                taskRunning = false
                 path.append("BypassAppLimit")
+            } else {
+                lastError = "minimuxer is not ready. Ensure you have WiFi and WireGuard VPN set up."
+                showErrorAlert.toggle()
             }
-        } else {
-            lastError = "minimuxer is not ready. Ensure you have WiFi and WireGuard VPN set up."
-            showErrorAlert.toggle()
+            taskRunning = false
         }
     }
     
     func applyChanges() {
-        if ready() {
-            Task {
+        Task {
+            taskRunning = true
+            if ready() {
                 mbdb = Restore.createBackupFiles(files: generateFilesToRestore())
-                taskRunning = false
                 path.append("ApplyChanges")
+            } else {
+                lastError = "minimuxer is not ready. Ensure you have WiFi and WireGuard VPN set up."
+                showErrorAlert.toggle()
             }
-        } else {
-            lastError = "minimuxer is not ready. Ensure you have WiFi and WireGuard VPN set up."
-            showErrorAlert.toggle()
+            taskRunning = false
         }
     }
     
