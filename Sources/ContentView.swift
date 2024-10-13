@@ -62,8 +62,6 @@ struct ContentView: View {
                     Text("Hide free developer apps from installd, so you could install more than 3 apps. You need to apply this for each 3 apps you install or update.")
                 }
                 Section {
-                    let cacheExtra = mobileGestalt["CacheExtra"] as! NSMutableDictionary
-
                     Toggle("Action Button", isOn: bindingForMGKeys(["cT44WE1EohiwRzhsZ8xEsw"]))
                         .disabled(requiresVersion(17))
                     Toggle("Allow installing iPadOS apps", isOn: bindingForMGKeys(["9MZ5AdH43csAUajl/dU+IQ"], type: [Int].self, defaultValue: [1], enableValue: [1, 2]))
@@ -81,7 +79,6 @@ struct ContentView: View {
                     Toggle("Dynamic Island (17.4+, might not work)", isOn: bindingForMGKeys(["YlEtTtHlNesRBMal1CqRaA"]))
                         .disabled(requiresVersion(17, 4))
                     Toggle("Disable region restrictions", isOn: bindingForRegionRestriction())
-                        .disabled(cacheExtra["h63QSdBCiT/z0WU6rdQv6Q"] as! String == "US")
                     Toggle("Internal Storage info", isOn: bindingForMGKeys(["LBJfwOEzExRxzlAnSuI7eg"]))
                     Toggle("Metal HUD for all apps", isOn: bindingForMGKeys(["EqrsVvjcYDdxHBiQmGhAWw"]))
                     Toggle("Stage Manager", isOn: bindingForMGKeys(["qeaj75wk3HF4DwQ8qbIi7g"]))
