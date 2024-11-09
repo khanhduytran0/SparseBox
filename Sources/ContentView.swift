@@ -110,7 +110,7 @@ struct ContentView: View {
                     // validate DeviceClass
                         .disabled(cacheExtra["+3Uf0Pm5F8Xy7Onyvko0vA"] as! String != "iPhone")
                 } footer: {
-                    Text("Override user interface idiom to iPadOS, so you could use all iPadOS multitasking features on iPhone. Gives you the same capabilities as TrollPad, but may cause some issues.")
+                    Text("Override user interface idiom to iPadOS, so you could use all iPadOS multitasking features on iPhone. Gives you the same capabilities as TrollPad, but may cause some issues.\nPLEASE DO NOT TURN OFF SHOW DOCK IN STAGE MANAGER OTHERWISE YOUR PHONE WILL BOOTLOOP WHEN ROTATING TO LANDSCAPE.")
                 }
                 Section {
                     Toggle("Reboot after finish restoring", isOn: $reboot)
