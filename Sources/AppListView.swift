@@ -26,7 +26,7 @@ struct AppItemView: View {
             } header: {
                 Text("Arbitrary read exploit")
             } footer: {
-                Text("Only supported on iOS 18.2b2 and older. For this exploit, folders can only be shared via AirDrop.\nIf you're sharing App Store apps, please note that it will still be encrypted.")
+                Text("Only supported on iOS 18.2b1 and older. For this exploit, folders can only be shared via AirDrop.\nIf you're sharing App Store apps, please note that it will still be encrypted.")
             }
         }
     }
