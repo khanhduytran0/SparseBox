@@ -14,19 +14,19 @@ struct AppItemView: View {
             }
             Section {
                 if let bundlePath = appDetails["Path"] {
-                    ShareLink(item: URL(string: "file://a\(bundlePath)")!) {
-                        Text("Share app bundle folder")
+                    Button("Copy app bundle folder") {
+                        UIPasteboard.general.string = "file://a\(bundlePath)"
                     }
                 }
                 if let containerPath = appDetails["Container"] {
-                    ShareLink(item: URL(string: "file://a\(containerPath)")!) {
-                        Text("Share app data folder")
+                    Button("Copy app data folder") {
+                        UIPasteboard.general.string = "file://a\(containerPath)"
                     }
                 }
             } header: {
                 Text("Arbitrary read exploit")
             } footer: {
-                Text("Only supported on iOS 18.2b1 and older. For this exploit, folders can only be shared via AirDrop.\nIf you're sharing App Store apps, please note that it will still be encrypted.")
+                Text("After copying path, open Settings, paste it in search bar, select all again and tap Share.\n\nOnly supported on iOS 18.2b1 and older. For this exploit, folders can only be shared via AirDrop.\nIf you're sharing App Store apps, please note that it will still remain encrypted.")
             }
         }
     }
