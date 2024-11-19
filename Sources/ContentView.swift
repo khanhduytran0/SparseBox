@@ -54,6 +54,9 @@ struct ContentView: View {
                     }
                 }
                 Section {
+                    Button("List installed apps") {
+                        testListApps()
+                    }
                     Button("Bypass 3 app limit") {
                         testBypassAppLimit()
                     }
@@ -159,8 +162,10 @@ Thanks to:
             .navigationDestination(for: String.self) { view in
                 if view == "ApplyChanges" {
                     LogView(mbdb: mbdb!, reboot: reboot)
-                } else if view == "BypassAppLimit" {
+                } else if view == "ApplyNoReboot" {
                     LogView(mbdb: mbdb!, reboot: false)
+                } else if view == "ListApps" {
+                    AppListView()
                 }
             }
             .navigationTitle("SparseBox")
@@ -194,13 +199,13 @@ Thanks to:
         let origMethod = class_getInstanceMethod(UIDocumentPickerViewController.self, #selector(UIDocumentPickerViewController.init(forOpeningContentTypes:asCopy:)))!
         method_exchangeImplementations(origMethod, fixMethod)
     }
-    
+
     func testBypassAppLimit() {
         Task {
             taskRunning = true
             if ready() {
                 mbdb = Restore.createBypassAppLimit()
-                path.append("BypassAppLimit")
+                path.append("ApplyNoReboot")
             } else {
                 lastError = "minimuxer is not ready. Ensure you have WiFi and WireGuard VPN set up."
                 showErrorAlert.toggle()
@@ -209,11 +214,21 @@ Thanks to:
         }
     }
     
+    func testListApps() {
+        if ready() {
+            path.append("ListApps")
+        } else {
+            lastError = "minimuxer is not ready. Ensure you have WiFi and WireGuard VPN set up."
+            showErrorAlert.toggle()
+        }
+    }
+    
     func applyChanges() {
         Task {
             taskRunning = true
             if ready() {
-                mbdb = Restore.createBackupFiles(files: generateFilesToRestore())
+                mbdb = Restore.createMobileGestalt(file: FileToRestore(from: modMGURL, to: URL(filePath: "/var/containers/Shared/SystemGroup/systemgroup.com.apple.mobilegestaltcache/Library/Caches/com.apple.MobileGestalt.plist"), owner: 501, group: 501))
+                //Restore.createBackupFiles(files: generateFilesToRestore())
                 path.append("ApplyChanges")
             } else {
                 lastError = "minimuxer is not ready. Ensure you have WiFi and WireGuard VPN set up."

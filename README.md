@@ -15,5 +15,6 @@ Before opening SparseBox, you have to close SideStore from app switcher. This is
 - @SideStore: em_proxy and minimuxer
 - @JJTech0130: SparseRestore and backup exploit
 - @PoomSmart: MobileGestalt dump
+- @Lakr233: BBackupp
 - @libimobiledevice
 - [the sneakyf1shy apple intelligence tutorial](https://gist.github.com/f1shy-dev/23b4a78dc283edd30ae2b2e6429129b5#file-best_sae_trick-md)

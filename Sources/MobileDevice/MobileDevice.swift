@@ -145,10 +145,13 @@ class MobileDevice {
         requireInstallProxyService(device: device) { inst_client in
             guard let inst_client else { return }
             let options: [String: Any] = [
-                "ApplicationType": "User",
+                //"ApplicationType": "User",
                 "ReturnAttributes": [
+                    "ApplicationType",
                     "CFBundleIdentifier",
+                    "CFBundleName",
                     "Path",
+                    "Container"
                 ],
             ]
             let data = try! PropertyListEncoder().encode(AnyCodable(options))
