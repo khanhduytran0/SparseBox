@@ -76,6 +76,7 @@ struct MBDBRecord {
         let properties_count = buffer.readInteger(endianness: .big, as: UInt8.self)!
         
         /*
+        print("###")
         print("domainlen \(domain_len) domain \(domain)")
         print("filenamelen \(filename_len) filename \(filename)")
         print("linklen \(link_len) link \(link)")
@@ -122,14 +123,17 @@ struct MBDBRecord {
         }
         var buffer = ByteBufferAllocator().buffer(capacity: capacity)
         
-        buffer.writeInteger(Int16(domain.count), endianness: .big, as: Int16.self)
-        buffer.writeString(domain)
+        let domainData = domain.data(using: .utf8)!
+        buffer.writeInteger(Int16(domainData.count), endianness: .big, as: Int16.self)
+        buffer.writeData(domainData)
         
-        buffer.writeInteger(Int16(filename.count), endianness: .big, as: Int16.self)
-        buffer.writeString(filename)
+        let filenameData = filename.data(using: .utf8)!
+        buffer.writeInteger(Int16(filenameData.count), endianness: .big, as: Int16.self)
+        buffer.writeData(filenameData)
         
-        buffer.writeInteger(Int16(link.count), endianness: .big, as: Int16.self)
-        buffer.writeString(link)
+        let linkData = link.data(using: .utf8)!
+        buffer.writeInteger(Int16(linkData.count), endianness: .big, as: Int16.self)
+        buffer.writeData(linkData)
         
         buffer.writeInteger(Int16(hash.count), endianness: .big, as: Int16.self)
         buffer.writeData(hash)
