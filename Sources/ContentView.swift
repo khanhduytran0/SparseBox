@@ -189,8 +189,8 @@ Thanks to:
         modMGURL = documentsDirectory.appendingPathComponent("ModifiedMobileGestalt.plist", conformingTo: .data)
         if !FileManager.default.fileExists(atPath: origMGURL.path) {
             let url = URL(filePath: "/var/containers/Shared/SystemGroup/systemgroup.com.apple.mobilegestaltcache/Library/Caches/com.apple.MobileGestalt.plist")
-            try! FileManager.default.copyItem(at: url, to: origMGURL)
-            try! FileManager.default.copyItem(at: url, to: modMGURL)
+            try? FileManager.default.copyItem(at: url, to: origMGURL)
+            try? FileManager.default.copyItem(at: url, to: modMGURL)
         }
         _mobileGestalt = State(initialValue: try! NSMutableDictionary(contentsOf: modMGURL, error: ()))
         

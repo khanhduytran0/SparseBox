@@ -69,16 +69,16 @@ struct Restore {
     
     static func createMobileGestalt(file: FileToRestore) -> Backup {
         Backup(files: [
-            Directory(path: "", domain: "SysSharedContainerDomain-systemgroup.com.apple.mobilegestaltcachf"),
-            Directory(path: "Library", domain: "SysSharedContainerDomain-systemgroup.com.apple.mobilegestaltcachf"),
-            Directory(path: "Library/Caches", domain: "SysSharedContainerDomain-systemgroup.com.apple.mobilegestaltcachf"),
+            Directory(path: "", domain: "SysSharedContainerDomain-systemgroup.com.apple.mobilegestaltcache"),
+            Directory(path: "systemgroup.com.apple.mobilegestaltcache/Library", domain: "SysSharedContainerDomain-"),
+            Directory(path: "systemgroup.com.apple.mobilegestaltcache/Library/Caches", domain: "SysSharedContainerDomain-"),
             ConcreteFile(
-                path: "Library/Caches/com.apple.MobileGestalt.plist",
-                domain: "SysSharedContainerDomain-systemgroup.com.apple.mobilegestaltcachf",
+                path: "systemgroup.com.apple.mobilegestaltcache/Library/Caches/com.apple.MobileGestalt.plist",
+                domain: "SysSharedContainerDomain-",
                 contents: file.contents,
                 owner: file.owner,
                 group: file.group),
-            SymbolicLink(path: "", domain: "SysSharedContainerDomain-systemgroup.com.apple.mobilegestaltcache", target: "systemgroup.com.apple.mobilegestaltcachf")
+            ConcreteFile(path: "", domain: "SysContainerDomain-../../../../../../../../crash_on_purpose", contents: Data())
         ])
     }
     
