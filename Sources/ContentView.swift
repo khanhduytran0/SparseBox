@@ -40,6 +40,7 @@ struct ContentView: View {
                         pairingFile = try! String(decoding: item, as: UTF8.self)
                         guard pairingFile?.contains("DeviceCertificate") ?? false else {
                             lastError = "The file you just dropped is not a pairing file"
+                            showErrorAlert.toggle()
                             pairingFile = nil
                             return false
                         }
