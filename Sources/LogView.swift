@@ -89,7 +89,7 @@ struct LogView: View {
                 log.append("Result: this iOS version is not supported.")
             } else if log.contains("crash_on_purpose") {
                 log.append("Result: restore successful.")
-                if willReboot && result == 0 {
+                if willReboot {
                     isRebooting.toggle()
                     MobileDevice.rebootDevice(udid: udid)
                 }
