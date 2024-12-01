@@ -82,6 +82,7 @@ struct ContentView: View {
                     Toggle("Crash Detection (might not work)", isOn: bindingForMGKeys(["HCzWusHQwZDea6nNhaKndw"]))
                     Toggle("Dynamic Island (17.4+, might not work)", isOn: bindingForMGKeys(["YlEtTtHlNesRBMal1CqRaA"]))
                         .disabled(requiresVersion(17, 4))
+                    Toggle("Disable region restrictions", isOn: bindingForRegionRestriction())
                     Toggle("Internal Storage info", isOn: bindingForMGKeys(["LBJfwOEzExRxzlAnSuI7eg"]))
                     Toggle("Metal HUD for all apps", isOn: bindingForMGKeys(["EqrsVvjcYDdxHBiQmGhAWw"]))
                     Toggle("Stage Manager", isOn: bindingForMGKeys(["qeaj75wk3HF4DwQ8qbIi7g"]))
@@ -284,6 +285,25 @@ Thanks to:
                     eligibilityData = featureFlagsData
                     // just remove the key as it will be pulled from device tree if missing
                     cacheExtra.removeObject(forKey: key)
+                }
+            }
+        )
+    }
+
+    func bindingForRegionRestriction() -> Binding<Bool> {
+        let cacheExtra = mobileGestalt["CacheExtra"] as! NSMutableDictionary
+        return Binding<Bool>(
+            get: {
+                return cacheExtra["h63QSdBCiT/z0WU6rdQv6Q"] as? String == "US" &&
+                    cacheExtra["zHeENZu+wbg7PUprwNwBWg"] as? String == "LL/A"
+            },
+            set: { enabled in
+                if enabled {
+                    cacheExtra["h63QSdBCiT/z0WU6rdQv6Q"] = "US"
+                    cacheExtra["zHeENZu+wbg7PUprwNwBWg"] = "LL/A"
+                } else {
+                    cacheExtra.removeObject(forKey: "h63QSdBCiT/z0WU6rdQv6Q")
+                    cacheExtra.removeObject(forKey: "zHeENZu+wbg7PUprwNwBWg")
                 }
             }
         )
