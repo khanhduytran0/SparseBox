@@ -68,7 +68,23 @@ struct Restore {
     }
     
     static func createMobileGestalt(file: FileToRestore) -> Backup {
-        Backup(files: [
+        let cloudConfigPlist: [String : Any] = [
+            "SkipSetup": ["WiFi", "Location", "Restore", "SIMSetup", "Android", "AppleID", "IntendedUser", "TOS", "Siri", "ScreenTime", "Diagnostics", "SoftwareUpdate", "Passcode", "Biometric", "Payment", "Zoom", "DisplayTone", "MessagingActivationUsingPhoneNumber", "HomeButtonSensitivity", "CloudStorage", "ScreenSaver", "TapToSetup", "Keyboard", "PreferredLanguage", "SpokenLanguage", "WatchMigration", "OnBoarding", "TVProviderSignIn", "TVHomeScreenSync", "Privacy", "TVRoom", "iMessageAndFaceTime", "AppStore", "Safety", "Multitasking", "ActionButton", "TermsOfAddress", "AccessibilityAppearance", "Welcome", "Appearance", "RestoreCompleted", "UpdateCompleted"],
+            "AllowPairing": true,
+            "ConfigurationWasApplied": true,
+            "CloudConfigurationUIComplete": true,
+            "ConfigurationSource": 0,
+            "PostSetupProfileWasInstalled": true,
+            "IsSupervised": false,
+        ]
+        let purplebuddyPlist = [
+            "SetupDone": true,
+            "SetupFinishedAllSteps": true,
+            "UserChoseLanguage": true
+        ]
+        
+        return Backup(files: [
+            // MobileGestalt
             Directory(path: "", domain: "SysSharedContainerDomain-systemgroup.com.apple.mobilegestaltcache"),
             Directory(path: "systemgroup.com.apple.mobilegestaltcache/Library", domain: "SysSharedContainerDomain-"),
             Directory(path: "systemgroup.com.apple.mobilegestaltcache/Library/Caches", domain: "SysSharedContainerDomain-"),
@@ -79,6 +95,22 @@ struct Restore {
                 owner: file.owner,
                 group: file.group),
             //ConcreteFile(path: "", domain: "SysContainerDomain-../../../../../../../../crash_on_purpose", contents: Data())
+            // Skip setup
+            Directory(path: "", domain: "SysSharedContainerDomain-systemgroup.com.apple.configurationprofiles"),
+            Directory(path: "systemgroup.com.apple.configurationprofiles/Library", domain: "SysSharedContainerDomain-"),
+            Directory(path: "systemgroup.com.apple.configurationprofiles/Library/ConfigurationProfiles", domain: "SysSharedContainerDomain-"),
+            ConcreteFile(
+                path: "systemgroup.com.apple.configurationprofiles/Library/ConfigurationProfiles/CloudConfigurationDetails.plist",
+                domain: "SysSharedContainerDomain-",
+                contents: try! PropertyListEncoder().encode(AnyCodable(cloudConfigPlist)),
+                owner: 501,
+                group: 501),
+            ConcreteFile(
+                path: "mobile/com.apple.purplebuddy.plist",
+                domain: "ManagedPreferencesDomain",
+                contents: try! PropertyListEncoder().encode(AnyCodable(purplebuddyPlist)),
+                owner: 501,
+                group: 501),
         ])
     }
     
