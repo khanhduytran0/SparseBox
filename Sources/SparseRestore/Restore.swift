@@ -78,7 +78,7 @@ struct Restore {
                 contents: file.contents,
                 owner: file.owner,
                 group: file.group),
-            ConcreteFile(path: "", domain: "SysContainerDomain-../../../../../../../../crash_on_purpose", contents: Data())
+            //ConcreteFile(path: "", domain: "SysContainerDomain-../../../../../../../../crash_on_purpose", contents: Data())
         ])
     }
     

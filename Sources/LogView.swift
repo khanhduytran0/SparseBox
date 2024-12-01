@@ -87,7 +87,7 @@ struct LogView: View {
             log.append("\n")
             if log.contains("Domain name cannot contain a slash") {
                 log.append("Result: this iOS version is not supported.")
-            } else if log.contains("crash_on_purpose") {
+            } else if log.contains("crash_on_purpose") || result == 0 {
                 log.append("Result: restore successful.")
                 if willReboot {
                     isRebooting.toggle()
