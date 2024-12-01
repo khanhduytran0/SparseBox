@@ -59,7 +59,9 @@ struct Restore {
                 domain: "SysContainerDomain-../../../../../../../..\(bundlePath.hasPrefix("/private/") ? String(bundlePath.dropFirst(8)) : bundlePath)",
                 owner: 33,
                 group: 33,
-                xattrs: ["com.apple.installd.validatedByFreeProfile": ""]
+                // set it 3 bytes because 4 bytes causes "EA was not set to expected value"
+                // it looks like the value is ignored if actual size is smaller than expected
+                xattrs: ["com.apple.installd.validatedByFreeProfile": "\u{0}\u{0}\u{0}"]
             ))
         }
         
