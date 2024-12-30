@@ -262,11 +262,9 @@ Thanks to:
     }
     
     func bindingForAppleIntelligence() -> Binding<Bool> {
-        guard let cacheVersion = mobileGestalt["CacheVersion"] else {
+        guard let cacheExtra = mobileGestalt["CacheExtra"] as? NSMutableDictionary else {
             return State(initialValue: false).projectedValue
         }
-        
-        let cacheExtra = mobileGestalt["CacheExtra"] as! NSMutableDictionary
         let key = "A62OafQ85EJAiiqKn4agtg"
         return Binding(
             get: {
@@ -291,7 +289,9 @@ Thanks to:
     }
 
     func bindingForRegionRestriction() -> Binding<Bool> {
-        let cacheExtra = mobileGestalt["CacheExtra"] as! NSMutableDictionary
+        guard let cacheExtra = mobileGestalt["CacheExtra"] as? NSMutableDictionary else {
+            return State(initialValue: false).projectedValue
+        }
         return Binding<Bool>(
             get: {
                 return cacheExtra["h63QSdBCiT/z0WU6rdQv6Q"] as? String == "US" &&
@@ -310,16 +310,14 @@ Thanks to:
     }
     
     func bindingForTrollPad() -> Binding<Bool> {
-        guard let cacheVersion = mobileGestalt["CacheVersion"] else {
+        // We're going to overwrite DeviceClassNumber but we can't do it via CacheExtra, so we need to do it via CacheData instead
+        guard let cacheData = mobileGestalt["CacheData"] as? NSMutableData,
+              let cacheExtra = mobileGestalt["CacheExtra"] as? NSMutableDictionary else {
             return State(initialValue: false).projectedValue
         }
-        
-        // We're going to overwrite DeviceClassNumber but we can't do it via CacheExtra, so we need to do it via CacheData instead
         let valueOffset = UserDefaults.standard.integer(forKey: "MGCacheDataDeviceClassNumberOffset")
-        let cacheData = mobileGestalt["CacheData"] as! NSMutableData
         //print("Read value from \(cacheData.mutableBytes.load(fromByteOffset: valueOffset, as: Int.self))")
         
-        let cacheExtra = mobileGestalt["CacheExtra"] as! NSMutableDictionary
         let keys = [
             "uKc7FPnEO++lVhHWHFlGbQ", // ipad
             "mG0AnH/Vy1veoqoLRAIgTA", // MedusaFloatingLiveAppCapability
@@ -350,11 +348,9 @@ Thanks to:
     }
     
     func bindingForMGKeys<T: Equatable>(_ keys: [String], type: T.Type = Int.self, defaultValue: T? = 0, enableValue: T? = 1) -> Binding<Bool> {
-        guard let cacheVersion = mobileGestalt["CacheVersion"] else {
+        guard let cacheExtra = mobileGestalt["CacheExtra"] as? NSMutableDictionary else {
             return State(initialValue: false).projectedValue
         }
-        
-        let cacheExtra = mobileGestalt["CacheExtra"] as! NSMutableDictionary
         return Binding(
             get: {
                 if let value = cacheExtra[keys.first!] as? T?, let enableValue {
