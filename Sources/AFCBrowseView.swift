@@ -13,6 +13,7 @@ struct AFCBrowseView: View {
     @State var items: [String : Bool] = [:] // path, isDirectory
     
     var body: some View {
+        
         List {
             ForEach(Array(items.keys), id: \.self) { item in
                 let isDir = items[item] as? Bool ?? false

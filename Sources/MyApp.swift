@@ -30,6 +30,7 @@ struct MyApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environmentObject(Utils.model)
         }
     }
 }

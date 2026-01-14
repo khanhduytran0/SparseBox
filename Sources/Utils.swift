@@ -5,7 +5,20 @@
 //  Created by Duy Tran on 20/11/25.
 //
 
+enum TabIdentifier {
+    case home
+    case apps
+    case afc
+    case mobileGestalt
+    case log
+}
+
+class SharedModel: ObservableObject {
+    @Published var selectedTab: TabIdentifier = .home
+}
+
 class Utils {
+    static let model = SharedModel()
     static let os = ProcessInfo().operatingSystemVersion
     static var udid = "0000-000000000000"
     static var port: UInt16 = 0

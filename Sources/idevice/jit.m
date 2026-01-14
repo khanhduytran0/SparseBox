@@ -315,7 +315,7 @@ int debug_app_pid(IdeviceProviderHandle* tcp_provider, int pid, LogFuncC logger,
     return 0;
 }
 
-int launch_app_via_proxy(IdeviceProviderHandle* tcp_provider, const char *bundle_id, LogFuncC logger) {
+int launch_app_via_proxy(IdeviceProviderHandle* tcp_provider, const char *bundle_id, int argc, const char* const* argv, LogFuncC logger) {
 //    idevice_init_logger(Info, Disabled, NULL);
     IdeviceFfiError* err = NULL;
 
@@ -384,8 +384,8 @@ int launch_app_via_proxy(IdeviceProviderHandle* tcp_provider, const char *bundle
                                      bundle_id,
                                      NULL,
                                      0,
-                                     NULL,
-                                     0,
+                                     argv,
+                                     argc,
                                      false,
                                      true,
                                      &pid);
@@ -456,7 +456,7 @@ cleanup:
                      [self createCLogger:logger], jsCallback) == 0;
 }
 
-- (BOOL)launchAppWithoutDebug:(NSString*)bundleID logger:(LogFunc)logger {
+- (BOOL)launchAppWithoutDebug:(NSString*)bundleID args:(NSArray<NSString *>*)args logger:(LogFunc)logger {
     NSError* err = nil;
     [self ensureHeartbeatWithError:&err];
     if(err) {
@@ -464,8 +464,16 @@ cleanup:
         return NO;
     }
 
+    int argc = (int)args.count;
+    const char* argv[argc+1];
+    argv[argc] = NULL;
+    for (int i = 0; i < argc; i++) {
+        argv[i] = args[i].UTF8String;
+    }
     int result = launch_app_via_proxy(provider,
                                       [bundleID UTF8String],
+                                      argc,
+                                      argv,
                                       [self createCLogger:logger]);
     return result == 0;
 }

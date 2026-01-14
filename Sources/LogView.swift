@@ -15,36 +15,33 @@ struct LogView: View {
     @StateObject private var log = GLOBAL_LOG
     @State var ran = false
     var body: some View {
-        NavigationView {
-            ScrollViewReader { proxy in
-                ScrollView {
-                    Text(GLOBAL_LOG.text)
-                        .font(.system(size: 12).monospaced())
-                        .fixedSize(horizontal: false, vertical: false)
-                        .textSelection(.enabled)
-                    Spacer()
-                        .id(0)
-                }
-                .onAppear {
-                    guard !ran else { return }
-                    ran = true
-                    
-                    logPipe.fileHandleForReading.readabilityHandler = { fileHandle in
-                        let data = fileHandle.availableData
-                        if !data.isEmpty, var logString = String(data: data, encoding: .utf8) {
-                            DispatchQueue.main.async {
-                                if logString.contains(Utils.udid) {
-                                    logString = logString.replacingOccurrences(of: Utils.udid, with: "<redacted>")
-                                }
-                                log.append(logString)
-                                proxy.scrollTo(0)
+        ScrollViewReader { proxy in
+            ScrollView {
+                Text(GLOBAL_LOG.text)
+                    .font(.system(size: 12).monospaced())
+                    .fixedSize(horizontal: false, vertical: false)
+                    .textSelection(.enabled)
+                Spacer()
+                    .id(0)
+            }
+            .onAppear {
+                guard !ran else { return }
+                ran = true
+                
+                logPipe.fileHandleForReading.readabilityHandler = { fileHandle in
+                    let data = fileHandle.availableData
+                    if !data.isEmpty, var logString = String(data: data, encoding: .utf8) {
+                        DispatchQueue.main.async {
+                            if logString.contains(Utils.udid) {
+                                logString = logString.replacingOccurrences(of: Utils.udid, with: "<redacted>")
                             }
+                            log.append(logString)
+                            proxy.scrollTo(0)
                         }
                     }
                 }
             }
         }
-        .navigationTitle("Log output")
     }
     
     init() {

@@ -3,8 +3,10 @@ import SwiftUI
 struct AppItemView: View {
     let appDetails: [String : Any]
     let bundleID: String
+    let canLaunchWithLiquidGlass: Bool
     var body: some View {
         Form {
+            Text("Version").badge(appDetails["CFBundleShortVersionString"] as? String ?? "unknown")
             NavigationLink {
                 List {
                     ForEach(Array(appDetails.keys), id: \.self) { k in
@@ -18,7 +20,19 @@ struct AppItemView: View {
                     }
                 }
             } label: {
-                Text("View app details")
+                Text("View full app details")
+            }
+            Section {
+                Button("Launch") {
+                    JITEnableContext.shared.launchAppWithoutDebug(bundleID, args: nil, logger: nil)
+                }
+                if canLaunchWithLiquidGlass {
+                    Button("Launch with Liquid Glass (DOES NOT WORK)") {
+                        let executablePath = "\(appDetails["Path"] as! String)/\(appDetails["CFBundleExecutable"] as! String)"
+                        let args = [executablePath, "-com.apple.SwiftUI.IgnoreSolariumLinkedOnCheck", "YES", "-com.apple.SwiftUI.IgnoreSolariumOptOut", "YES"]
+                        JITEnableContext.shared.launchAppWithoutDebug(bundleID, args: args, logger: nil)
+                    }
+                }
             }
             Section {
                 if let bundlePath = appDetails["Path"] {
@@ -43,11 +57,19 @@ struct AppItemView: View {
     init(bundleID: String) {
         self.bundleID = bundleID
         self.appDetails = ["Loading": AnyCodable("...")]
+        self.canLaunchWithLiquidGlass = false
     }
 
     init(appDetails: [String: Any]) {
         self.appDetails = appDetails
         self.bundleID = (appDetails["CFBundleIdentifier"] as? String) ?? ""
+        if #available(iOS 26, *) {
+            let sdkName = appDetails["DTSDKName"] as? String ?? "iphoneos10.0"
+            let forceOptOut = appDetails["UIDesignRequiresCompatibility"] as? Bool ?? false
+            self.canLaunchWithLiquidGlass = sdkName.hasPrefix("iphoneos1") || forceOptOut
+        } else {
+            self.canLaunchWithLiquidGlass = false
+        }
     }
 }
 
@@ -55,6 +77,7 @@ struct AppListView: View {
     @State var apps: [String : [String : Any]] = [:]
     @State var appIcons: [String : UIImage] = [:]
     @State var searchString: String = ""
+    @State var errorMessage: String? = nil
 
     var results: [String] {
         let filtered: [String]
@@ -62,8 +85,9 @@ struct AppListView: View {
             filtered = Array(apps.keys)
         } else {
             filtered = apps.compactMap { key, appDetails in
-                let appName = appDetails["CFBundleName"] as? String
-                let appPath = appDetails["Path"] as? String
+                let appName = (appDetails["CFBundleName"] as? String)?.lowercased()
+                let appPath = (appDetails["Path"] as? String)?.lowercased()
+                let searchString = searchString.lowercased()
                 return (appName!.contains(searchString) ||
                         appPath!.contains(searchString)) ? key : nil
             }
@@ -76,51 +100,73 @@ struct AppListView: View {
     }
 
     var body: some View {
-        List {
-            ForEach(results, id: \.self) { bundleID in
-                let appDetails = apps[bundleID]
-                let appName = (appDetails?["CFBundleName"] as? String) ?? ""
-                let appBundleID = (appDetails?["CFBundleIdentifier"] as? String) ?? ""
-                NavigationLink {
-                    if let details = appDetails {
-                        AppItemView(appDetails: details)
-                    } else {
-                        AppItemView(bundleID: bundleID)
-                    }
-                } label: {
-                    Image(uiImage: appIcons[bundleID] ?? UIImage(systemName: "app")!)
-                        .resizable()
-                        .frame(width: 40, height: 40)
-                        .task(id: bundleID) {
-                            guard appIcons[bundleID] == nil else { return }
-                            await MainActor.run {
-                                appIcons[bundleID] = UIImage(systemName: "app")
+        VStack {
+            if let errorMessage {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.system(size: 72))
+                Text(errorMessage)
+                    .padding()
+            } else {
+                List {
+                    ForEach(results, id: \.self) { bundleID in
+                        let appDetails = apps[bundleID]
+                        let appName = (appDetails?["CFBundleName"] as? String) ?? ""
+                        let appBundleID = (appDetails?["CFBundleIdentifier"] as? String) ?? ""
+                        NavigationLink {
+                            if let details = appDetails {
+                                AppItemView(appDetails: details)
+                            } else {
+                                AppItemView(bundleID: bundleID)
                             }
-                            let icon = await Task.detached(priority: .background) {
-                                try? JITEnableContext.shared.getAppIcon(withBundleId: bundleID)
-                            }.value
-                            await MainActor.run {
-                                if let icon { appIcons[bundleID] = icon }
+                        } label: {
+                            Image(uiImage: appIcons[bundleID] ?? UIImage(systemName: "app")!)
+                                .resizable()
+                                .frame(width: 40, height: 40)
+                                .task(id: bundleID) {
+                                    guard appIcons[bundleID] == nil else { return }
+                                    await MainActor.run {
+                                        appIcons[bundleID] = UIImage(systemName: "app")
+                                    }
+                                    let icon = await Task.detached(priority: .background) {
+                                        try? JITEnableContext.shared.getAppIcon(withBundleId: bundleID)
+                                    }.value
+                                    await MainActor.run {
+                                        if let icon { appIcons[bundleID] = icon }
+                                    }
+                                }
+                            VStack(alignment: .leading) {
+                                Text(appName)
+                                Text(appBundleID).font(Font.footnote)
                             }
                         }
-                    VStack(alignment: .leading) {
-                        Text(appName)
-                        Text(appBundleID).font(Font.footnote)
+                    }
+                }
+                .onAppear {
+                    Task {
+                        do {
+                            apps = try JITEnableContext.shared.getAllAppsInfo() as! [String : [String : Any]]
+                        } catch {
+                            errorMessage = "Failed to get app list: \(error)"
+                        }
+                    }
+                }
+                .searchable(text: $searchString)
+            }
+        }
+        .navigationTitle("App list")
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button("Refresh", systemImage: "arrow.clockwise") {
+                    Task {
+                        do {
+                            apps = try JITEnableContext.shared.getAllAppsInfo() as! [String : [String : Any]]
+                        } catch {
+                            errorMessage = "Failed to get app list: \(error)"
+                        }
                     }
                 }
             }
         }
-        .onAppear {
-            Task {
-                do {
-                    apps = try JITEnableContext.shared.getAllAppsInfo() as! [String : [String : Any]]
-                } catch {
-                    apps = ["Failed to get app list: \(error)": [:]]
-                }
-            }
-        }
-        .searchable(text: $searchString)
-        .navigationTitle("App list")
     }
     
     init() {

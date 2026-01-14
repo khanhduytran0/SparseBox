@@ -43,7 +43,7 @@ typedef void (^SyslogErrorHandler)(NSError *error);
 @interface JITEnableContext(JIT)
 - (BOOL)debugAppWithBundleID:(NSString*)bundleID logger:(LogFunc)logger jsCallback:(DebugAppCallback)jsCallback;
 - (BOOL)debugAppWithPID:(int)pid logger:(LogFunc)logger jsCallback:(DebugAppCallback)jsCallback;
-- (BOOL)launchAppWithoutDebug:(NSString*)bundleID logger:(LogFunc)logger;
+- (BOOL)launchAppWithoutDebug:(NSString*)bundleID args:(NSArray<NSString *>*)args logger:(LogFunc)logger;
 @end
 
 @interface JITEnableContext(DDI)

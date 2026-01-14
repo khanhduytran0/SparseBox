@@ -81,45 +81,41 @@ struct MobileGestaltView: View {
             }
             Section {
                 Toggle("Respring after finish restoring", isOn: $respring)
-                NavigationLink("Apply changes") {
-                    LogView()
-                        .onAppear {
-                            saveProductType()
-                            try! mobileGestalt.write(to: modMGURL)
-                            DispatchQueue.global(qos: .background).async {
-                                Task {
-                                    do {
-                                        try await performApplyMobileGestalt()
-                                    } catch {
-                                        await MainActor.run {
-                                            lastError = "\(error)"
-                                            showErrorAlert = true
-                                        }
-                                    }
+                Button("Apply changes") {
+                    Utils.model.selectedTab = .log
+                    saveProductType()
+                    try! mobileGestalt.write(to: modMGURL)
+                    DispatchQueue.global(qos: .background).async {
+                        Task {
+                            do {
+                                try await performApplyMobileGestalt()
+                            } catch {
+                                await MainActor.run {
+                                    lastError = "\(error)"
+                                    showErrorAlert = true
                                 }
                             }
                         }
+                    }
                 }
                 .disabled(taskRunning)
-                NavigationLink("Reset changes") {
-                    LogView()
-                        .onAppear {
-                            try! FileManager.default.removeItem(at: modMGURL)
-                            try! FileManager.default.copyItem(at: origMGURL, to: modMGURL)
-                            mobileGestalt = try! NSMutableDictionary(contentsOf: modMGURL, error: ())
-                            DispatchQueue.global(qos: .background).async {
-                                Task {
-                                    do {
-                                        try await performApplyMobileGestalt()
-                                    } catch {
-                                        await MainActor.run {
-                                            lastError = "\(error)"
-                                            showErrorAlert = true
-                                        }
-                                    }
+                Button("Reset changes") {
+                    Utils.model.selectedTab = .log
+                    try! FileManager.default.removeItem(at: modMGURL)
+                    try! FileManager.default.copyItem(at: origMGURL, to: modMGURL)
+                    mobileGestalt = try! NSMutableDictionary(contentsOf: modMGURL, error: ())
+                    DispatchQueue.global(qos: .background).async {
+                        Task {
+                            do {
+                                try await performApplyMobileGestalt()
+                            } catch {
+                                await MainActor.run {
+                                    lastError = "\(error)"
+                                    showErrorAlert = true
                                 }
                             }
                         }
+                    }
                 }
                 .disabled(taskRunning)
             }
