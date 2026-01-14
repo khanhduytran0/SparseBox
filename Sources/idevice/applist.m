@@ -10,7 +10,10 @@
 #include <stdlib.h>
 #include <string.h>
 #import "applist.h"
+#import "JITEnableContext.h"
+#import "JITEnableContextInternal.h"
 
+NSError* makeError(int code, NSString* msg);
 static NSString *extractAppName(plist_t app)
 {
     plist_t displayNameNode = plist_dict_get_item(app, "CFBundleDisplayName");
@@ -19,10 +22,10 @@ static NSString *extractAppName(plist_t app)
         plist_get_string_val(displayNameNode, &displayNameC);
         if (displayNameC && displayNameC[0] != '\0') {
             NSString *displayName = [NSString stringWithUTF8String:displayNameC];
-            free(displayNameC);
+            plist_mem_free(displayNameC);
             return displayName;
         }
-        free(displayNameC);
+        plist_mem_free(displayNameC);
     }
 
     plist_t nameNode = plist_dict_get_item(app, "CFBundleName");
@@ -31,10 +34,10 @@ static NSString *extractAppName(plist_t app)
         plist_get_string_val(nameNode, &nameC);
         if (nameC && nameC[0] != '\0') {
             NSString *name = [NSString stringWithUTF8String:nameC];
-            free(nameC);
+            plist_mem_free(nameC);
             return name;
         }
-        free(nameC);
+        plist_mem_free(nameC);
     }
 
     return @"Unknown";
@@ -133,12 +136,12 @@ static NSDictionary<NSString*, NSString*> *buildAppDictionary(void *apps,
         char *bidC = NULL;
         plist_get_string_val(bidNode, &bidC);
         if (!bidC || bidC[0] == '\0') {
-            free(bidC);
+            plist_mem_free(bidC);
             continue;
         }
 
         NSString *bundleID = [NSString stringWithUTF8String:bidC];
-        free(bidC);
+        plist_mem_free(bidC);
 
         result[bundleID] = extractAppName(app);
     }
@@ -152,21 +155,29 @@ static NSDictionary<NSString*, NSString*> *performAppQuery(IdeviceProviderHandle
                                                            BOOL (^filter)(plist_t app))
 {
     InstallationProxyClientHandle *client = NULL;
-    if (installation_proxy_connect(provider, &client)) {
-        *error = @"Failed to connect to installation proxy";
+    IdeviceFfiError* err = installation_proxy_connect(provider, &client);
+    if (err) {
+        *error = [NSString stringWithFormat:@"Failed to connect to installation proxy: %s", err->message];
+        idevice_error_free(err);
         return nil;
     }
 
-    void *apps = NULL;
+    plist_t *apps = NULL;
     size_t count = 0;
-    if (installation_proxy_get_apps(client, NULL, NULL, 0, &apps, &count)) {
+    err = installation_proxy_get_apps(client, NULL, NULL, 0, (void*)&apps, &count);
+    if (err) {
+        *error = [NSString stringWithFormat:@"Failed to get apps: %s", err->message];
+        idevice_error_free(err);
         installation_proxy_client_free(client);
-        *error = @"Failed to get apps";
         return nil;
     }
 
     NSDictionary<NSString*, NSString*> *result = buildAppDictionary(apps, count, requireGetTaskAllow, filter);
     installation_proxy_client_free(client);
+    for(int i = 0; i < count; ++i) {
+        plist_free(apps[i]);
+    }
+    idevice_data_free((uint8_t *)apps, sizeof(plist_t)*count);
     return result;
 }
 
@@ -312,3 +323,83 @@ id plist_to_objc_object(plist_t plist) {
             return nil;
     }
 }
+
+@implementation JITEnableContext(App)
+
+- (NSDictionary<NSString*, NSString*>*)getAppListWithError:(NSError**)error {
+    [self ensureHeartbeatWithError:error];
+    if(*error) {
+        return nil;
+    }
+
+    NSString* errorStr = nil;
+    NSDictionary<NSString*, NSString*>* apps = list_installed_apps(provider, &errorStr);
+    if (errorStr) {
+        *error = [self errorWithStr:errorStr code:-17];
+        return nil;
+    }
+    return apps;
+}
+
+- (NSDictionary<NSString*, NSString*>*)getAllAppsWithError:(NSError**)error {
+    [self ensureHeartbeatWithError:error];
+    if(*error) {
+        return nil;
+    }
+
+    NSString* errorStr = nil;
+    NSDictionary<NSString*, NSString*>* apps = list_all_apps(provider, &errorStr);
+    if (errorStr) {
+        *error = [self errorWithStr:errorStr code:-17];
+        return nil;
+    }
+    return apps;
+}
+
+- (NSDictionary<NSString*, NSString*>*)getHiddenSystemAppsWithError:(NSError**)error {
+    [self ensureHeartbeatWithError:error];
+    if(*error) {
+        return nil;
+    }
+
+    NSString* errorStr = nil;
+    NSDictionary<NSString*, NSString*>* apps = list_hidden_system_apps(provider, &errorStr);
+    if (errorStr) {
+        *error = [self errorWithStr:errorStr code:-17];
+        return nil;
+    }
+    return apps;
+}
+
+- (UIImage*)getAppIconWithBundleId:(NSString*)bundleId error:(NSError**)error {
+    [self ensureHeartbeatWithError:error];
+    if(*error) {
+        return nil;
+    }
+
+    NSString* errorStr = nil;
+    UIImage* icon = getAppIcon(provider, bundleId, &errorStr);
+    if (errorStr) {
+        *error = [self errorWithStr:errorStr code:-17];
+        return nil;
+    }
+    return icon;
+}
+
+- (NSDictionary<NSString*, id>*)getAllAppsInfoWithError:(NSError**)error {
+    if (!provider) {
+        NSLog(@"Provider not initialized!");
+        *error = [self errorWithStr:@"Provider not initialized!" code:-1];
+        return nil;
+    }
+
+    NSString* errorStr = nil;
+    NSDictionary<NSString*, id>* apps = getAllAppsInfo(provider, &errorStr);
+    if (errorStr) {
+        *error = [self errorWithStr:errorStr code:-17];
+        return nil;
+    }
+    return apps;
+}
+
+@end

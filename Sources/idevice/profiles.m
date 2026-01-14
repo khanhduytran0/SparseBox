@@ -5,6 +5,8 @@
 //  Created by s s on 2025/11/29.
 //
 #include "profiles.h"
+#import "JITEnableContext.h"
+#import "JITEnableContextInternal.h"
 @import Foundation;
 
 NSError* makeError(int code, NSString* msg) {
@@ -142,5 +144,36 @@ bool addProfile(IdeviceProviderHandle* provider, NSData* profile, NSError** erro
     }
     return nil;
 }
+
+@end
+
+@implementation JITEnableContext(Profile)
+
+- (NSArray<NSData*>*)fetchAllProfiles:(NSError **)error {
+    [self ensureHeartbeatWithError:error];
+    if(*error) {
+        return nil;
+    }
+    
+    return fetchAppProfiles(provider, error);
+}
+
+- (BOOL)removeProfileWithUUID:(NSString*)uuid error:(NSError **)error {
+    [self ensureHeartbeatWithError:error];
+    if(*error) {
+        return nil;
+    }
+    
+    return removeProfile(provider, uuid, error);
+}
+
+- (BOOL)addProfile:(NSData*)profile error:(NSError **)error {
+    [self ensureHeartbeatWithError:error];
+    if(*error) {
+        return nil;
+    }
+    return addProfile(provider, profile, error);
+}
+
 
 @end

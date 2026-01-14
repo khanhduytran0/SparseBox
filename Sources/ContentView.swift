@@ -72,6 +72,10 @@ struct ContentView: View {
                 }
                 
                 Section {
+                    NavigationLink("AFC File browse (/var/mobile/Media)") {
+                        AFCBrowseView()
+                    }
+                    .disabled(!heartbeatReady)
                     NavigationLink("List installed apps") {
                         AppListView()
                     }
@@ -118,7 +122,7 @@ Thanks to:
                     }
                 }
             }
-            .fileImporter(isPresented: $showPairingFileImporter, allowedContentTypes: [UTType(filenameExtension: "mobiledevicepairing", conformingTo: .data)!], onCompletion: { result in
+            .fileImporter(isPresented: $showPairingFileImporter, allowedContentTypes: [UTType(filenameExtension: "mobiledevicepairing", conformingTo: .data)!, .propertyList], onCompletion: { result in
                 switch result {
                 case .success(let url):
                     pairingFile = try! String(contentsOf: url)
@@ -208,49 +212,50 @@ Thanks to:
             return
         }
         //let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].absoluteString
-        DispatchQueue.global(qos: .background).async {
-            print("Heartbeat: starting...")
-            let completionHandler: @convention(block) (Int32, String?) -> Void = { result, message in
-                if result == 0 {
-                    heartbeatReady = true
-                    print("Heartbeat started successfully: \(message ?? "")")
-                    
-                    // quick way to check if DDI is mounted
-                    let ddiPath: String
-                    if #available(iOS 17.0, *) {
-                        ddiPath = "/System/Developer/Library"
-                    } else {
-                        ddiPath = "/Developer/Library"
-                    }
-                    ddiMounted = FileManager.default.fileExists(atPath: ddiPath)
-                    
-                    // TODO: mount DDI
-                    //                        pubHeartBeat = true
-                    //
-                    //                        if FileManager.default.fileExists(atPath: URL.documentsDirectory.appendingPathComponent("DDI/Image.dmg.trustcache").path) {
-                    //                            MountingProgress.shared.pubMount()
-                    //                        }
+        DispatchQueue.global(qos: .userInteractive).async {
+            do {
+                try JITEnableContext.shared.startHeartbeat()
+                heartbeatReady = true
+                print("Heartbeat started successfully")
+                
+                // quick way to check if DDI is mounted
+                let ddiPath: String
+                if #available(iOS 17.0, *) {
+                    ddiPath = "/System/Developer/Library"
                 } else {
-                    print("Error: \(message ?? "") (Code: \(result))")
-                    DispatchQueue.main.async {
-                        if result == -9 {
-                            do {
-                                try FileManager.default.removeItem(at: URL.documentsDirectory.appendingPathComponent("pairingFile.plist"))
-                                print("Removed invalid pairing file")
-                            } catch {
-                                print("Error removing invalid pairing file: \(error)")
-                            }
-                            
-                            lastError = "The pairing file is invalid or expired. Please select a new pairing file."
-                            showErrorAlert.toggle()
-                        } else {
-                            lastError = "Failed to connect to Heartbeat (\(result)). Are you connected to WiFi or is Airplane Mode enabled? Cellular data isn’t supported. Please launch the app at least once with WiFi enabled. After that, you can switch to cellular data to turn on the VPN, and once the VPN is active you can use Airplane Mode."
-                            showErrorAlert.toggle()
+                    ddiPath = "/Developer/Library"
+                }
+                ddiMounted = FileManager.default.fileExists(atPath: ddiPath)
+                
+                // TODO: mount DDI
+//                DispatchQueue.main.async {
+//                    let trustcachePath = URL.documentsDirectory.appendingPathComponent("DDI/Image.dmg.trustcache").path
+//                    guard FileManager.default.fileExists(atPath: trustcachePath),
+//                          !MountingProgress.shared.coolisMounted,
+//                          MountingProgress.shared.mountingThread == nil else { return }
+//                    MountingProgress.shared.pubMount()
+//                }
+            } catch {
+                let err2 = error as NSError
+                let code = err2.code
+                print("Error: \(error.localizedDescription) (Code: \(code))")
+                DispatchQueue.main.async {
+                    if code == -9 {
+                        do {
+                            try FileManager.default.removeItem(at: URL.documentsDirectory.appendingPathComponent("pairingFile.plist"))
+                            print("Removed invalid pairing file")
+                        } catch {
+                            print("Error removing invalid pairing file: \(error)")
                         }
+                        
+                        lastError = "The pairing file is invalid or expired. Please select a new pairing file."
+                        showErrorAlert.toggle()
+                    } else {
+                        lastError = "Failed to connect to Heartbeat (\(code)). Make sure Wi‑Fi and LocalDevVPN are connected and that the device is reachable. Launch the app at least once while online before trying again."
+                        showErrorAlert.toggle()
                     }
                 }
             }
-            JITEnableContext.shared.startHeartbeat(completionHandler: completionHandler, logger: nil)
         }
     }
     
