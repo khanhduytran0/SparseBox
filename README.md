@@ -1,9 +1,16 @@
 # SparseBox
 
-On-device backup restoration?
+On-device toolbox?
 
 - [x] rewrote SparseRestore to swift
 - [x] implemented BookRestore
+
+Beside exploting SparseRestore and BookRestore, SparseBox also includes some tools for advanced users that works on latest iOS available:
+- [x] 🚧 AFC File browser
+- [x] 🚧 App list
+  + [ ] 🚧 Open app with Liquid Glass
+- [x] Running Processes list
+- [x] 🚧 Provisioning Profiles list
 
 ## Installation
 SideStore is recommended as you will also be getting the pairing file and setting up VPN.
