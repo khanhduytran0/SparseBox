@@ -91,6 +91,9 @@ struct HomeView: View {
                     NavigationLink("AFC") {
                         AFCBrowseView()
                     }
+                    NavigationLink("Provisioning profiles") {
+                        ProfileListView()
+                    }
                 } header: {
                     Text("Other tools")
                 }

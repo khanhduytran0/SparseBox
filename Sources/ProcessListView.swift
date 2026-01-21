@@ -1,8 +1,8 @@
 //
-//  AFCBrowseView.swift
+//  ProcessListView.swift
 //  SparseBox
 //
-//  Created by Duy Tran on 13/12/25.
+//  Created by Duy Tran on 21/01/26.
 //
 
 import Combine
@@ -114,7 +114,7 @@ struct ProcessListView: View {
                             VStack(alignment: .leading) {
                                 Text(pid)
                                 Text(path)
-                                    .font(.system(size: 14))
+                                    .font(.footnote)
                                     .lineLimit(1)
                                     .truncationMode(.middle)
                             }

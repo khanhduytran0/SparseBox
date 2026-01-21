@@ -14,7 +14,7 @@ struct AppItemView: View {
                         VStack(alignment: .leading) {
                             Text(k)
                             Text(v ?? "(not a String)")
-                                .font(Font.footnote)
+                                .font(.footnote)
                                 .textSelection(.enabled)
                         }
                     }

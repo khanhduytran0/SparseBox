@@ -4,6 +4,7 @@
 @import UIKit;
 #import "idevice.h"
 #import "applist.h"
+#import "profiles.h"
 #import "JITEnableContext.h"
 
 long FindCacheDataOffset(const char *mgKey);
