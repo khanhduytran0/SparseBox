@@ -142,13 +142,7 @@ struct AppListView: View {
                     }
                 }
                 .onAppear {
-                    Task {
-                        do {
-                            apps = try JITEnableContext.shared.getAllAppsInfo() as! [String : [String : Any]]
-                        } catch {
-                            errorMessage = "Failed to get app list: \(error)"
-                        }
-                    }
+                    refresh()
                 }
                 .searchable(text: $searchString)
             }
@@ -157,14 +151,18 @@ struct AppListView: View {
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button("Refresh", systemImage: "arrow.clockwise") {
-                    Task {
-                        do {
-                            apps = try JITEnableContext.shared.getAllAppsInfo() as! [String : [String : Any]]
-                        } catch {
-                            errorMessage = "Failed to get app list: \(error)"
-                        }
-                    }
+                    refresh()
                 }
+            }
+        }
+    }
+    
+    func refresh() {
+        Task {
+            do {
+                apps = try JITEnableContext.shared.getAllAppsInfo() as! [String : [String : Any]]
+            } catch {
+                errorMessage = "Failed to get app list: \(error)"
             }
         }
     }

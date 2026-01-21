@@ -10,18 +10,18 @@ struct ContentView: View {
                     Text("Home")
                 }
                 .tag(TabIdentifier.home)
-            NavigationStack { AFCBrowseView() }
-                .tabItem {
-                    Image(systemName: "folder")
-                    Text("AFC")
-                }
-                .tag(TabIdentifier.afc)
             NavigationStack { AppListView() }
                 .tabItem {
                     Image(systemName: "square.stack.3d.up.fill")
                     Text("Apps")
                 }
                 .tag(TabIdentifier.apps)
+            NavigationStack { ProcessListView() }
+                .tabItem {
+                    Image(systemName: "waveform.path.ecg.magnifyingglass")
+                    Text("Processes")
+                }
+                .tag(TabIdentifier.afc)
             MobileGestaltView()
                 .tabItem {
                     Image(systemName: "gearshape")

@@ -39,7 +39,7 @@ struct AFCBrowseView: View {
         .onAppear {
             print("Loading AFC path: \(afcPath)")
             DispatchQueue.global().async {
-                let result = try! JITEnableContext.shared.afcListDir(afcPath)
+                let result = try? JITEnableContext.shared.afcListDir(afcPath)
                     .dropFirst(2) // skip . and ..
                     .sorted()
                     .compactMap { item in
@@ -47,11 +47,11 @@ struct AFCBrowseView: View {
                         let isDir = JITEnableContext.shared.afcIsPathDirectory(fullPath)
                         return (item, isDir)
                     }
-                    .reduce(into: [String : Bool]()) { dict, pair in
-                        dict[pair.0] = pair.1
-                    }
                 DispatchQueue.main.async {
-                    self.items = result
+                    self.items = result?
+                        .reduce(into: [String : Bool]()) { dict, pair in
+                            dict[pair.0] = pair.1
+                        } ?? [:]
                 }
             }
         }

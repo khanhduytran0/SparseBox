@@ -86,6 +86,15 @@ struct HomeView: View {
                         (Restore.supportedExploitLevel() == .dotAndSlashes ? "" : "\nYour iOS version (\(UIDevice.current.systemVersion)) does not support SparseRestore.")
                     )
                 }
+                
+                Section {
+                    NavigationLink("AFC") {
+                        AFCBrowseView()
+                    }
+                } header: {
+                    Text("Other tools")
+                }
+                
                 Section {
                 } footer: {
                     VStack {
