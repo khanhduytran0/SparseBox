@@ -43,8 +43,10 @@ struct ProfileItemView: View {
 
 struct ProfileListView: View {
     @State var items: [Data: [String: AnyHashable]] = [:]
+    @State var uuidToDelete: String? = nil
     @State var errorMessage: String? = nil
     @State var presentProfilePicker: Bool = false
+    @State var presentDeleteConfirm = false
     
     var body: some View {
         VStack {
@@ -66,8 +68,35 @@ struct ProfileListView: View {
                                     .font(.footnote)
                             }
                         }
+                        .swipeActions(edge: .trailing) {
+                            Button(role: .destructive) {
+                                uuidToDelete = details["UUID"] as? String ?? "unknown"
+                                presentDeleteConfirm = true
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
+                        }
                     }
                 }
+            }
+        }
+        .alert("Are you sure you want to delete this item? The app associated with the provisioning profile will not launch anymore.",
+                            isPresented: $presentDeleteConfirm) {
+            Button("Delete", role: .destructive) {
+                if let uuidToDelete {
+                    do {
+                        try JITEnableContext.shared.removeProfile(withUUID: uuidToDelete)
+                        DispatchQueue.global().async {
+                            refresh()
+                        }
+                    } catch {
+                        errorMessage = "Failed to delete profile: \(error)"
+                    }
+                }
+                uuidToDelete = nil
+            }
+            Button("Cancel", role: .cancel) {
+                uuidToDelete = nil
             }
         }
         .toolbar {

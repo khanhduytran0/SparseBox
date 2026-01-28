@@ -5,7 +5,7 @@ On-device toolbox?
 - [x] rewrote SparseRestore to swift
 - [x] implemented BookRestore
 
-Beside exploting SparseRestore and BookRestore, SparseBox also includes some tools for advanced users that works on latest iOS available:
+Beside exploiting SparseRestore and BookRestore, SparseBox also includes some tools for advanced users that works on latest iOS available:
 - [x] 🚧 AFC File browser
 - [x] 🚧 App list
   + [ ] 🚧 Open app with Liquid Glass
