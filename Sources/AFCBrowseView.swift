@@ -44,7 +44,7 @@ struct AFCBrowseView: View {
                     .sorted()
                     .compactMap { item in
                         let fullPath = (afcPath as NSString).appendingPathComponent(item)
-                        let isDir = JITEnableContext.shared.afcIsPathDirectory(fullPath)
+                        let isDir = JITEnableContext.shared.afcIsPathDirectory(fullPath) ?? false
                         return (item, isDir)
                     }
                 DispatchQueue.main.async {

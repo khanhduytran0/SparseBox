@@ -12,12 +12,14 @@
 @implementation JITEnableContext(AFC)
 
 - (BOOL)afcIsPathDirectory:(NSString *)path {
-    if (!provider) {
-        NSLog(@"Provider not initialized!");
-        return NO;
+    NSError *error;
+    [self ensureTunnelWithError:&error];
+    if(error) {
+        return nil;
     }
+    
     struct AfcClientHandle *client = NULL;
-    IdeviceFfiError* err = afc_client_connect(provider, &client);
+    IdeviceFfiError* err = afc_client_connect_rsd(adapter, handshake, &client);
     if (err) {
         return NO;
     }
@@ -32,13 +34,13 @@
 }
 
 - (NSArray<NSString *> *)afcListDir:(NSString *)path error:(NSError **)error {
-    if (!provider) {
-        NSLog(@"Provider not initialized!");
-        *error = [self errorWithStr:@"Provider not initialized!" code:-1];
+    [self ensureTunnelWithError:error];
+    if(*error) {
         return nil;
     }
+    
     struct AfcClientHandle *client = NULL;
-    IdeviceFfiError* err = afc_client_connect(provider, &client);
+    IdeviceFfiError* err = afc_client_connect_rsd(adapter, handshake, &client);
     if (err) {
         *error = [self errorWithStr:@"Failed to connect to AFC!" code:err->code];
         return nil;
@@ -59,13 +61,13 @@
 }
 
 - (BOOL)afcPushFile:(NSString *)sourcePath toPath:(NSString *)destPath error:(NSError **)error {
-    if (!provider) {
-        NSLog(@"Provider not initialized!");
-        *error = [self errorWithStr:@"Provider not initialized!" code:-1];
+    [self ensureTunnelWithError:error];
+    if(*error) {
         return nil;
     }
+    
     struct AfcClientHandle *client = NULL;
-    IdeviceFfiError* err = afc_client_connect(provider, &client);
+    IdeviceFfiError* err = afc_client_connect_rsd(adapter, handshake, &client);
     if (err) {
         *error = [self errorWithStr:@"Failed to connect to AFC!" code:err->code];
         return nil;

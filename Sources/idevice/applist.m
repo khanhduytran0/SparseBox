@@ -149,13 +149,74 @@ static NSDictionary<NSString*, NSString*> *buildAppDictionary(void *apps,
     return result;
 }
 
-static NSDictionary<NSString*, NSString*> *performAppQuery(IdeviceProviderHandle *provider,
+static NSArray<NSDictionary*>* getSideloadedApps(AdapterHandle *adapter,
+                         RsdHandshakeHandle *handshake,
+                         NSString **error) {
+    InstallationProxyClientHandle *client = NULL;
+    IdeviceFfiError* err = installation_proxy_connect_rsd(adapter, handshake, &client);
+    if (err) {
+        *error = [NSString stringWithFormat:@"Failed to connect to installation proxy: %s", err->message];
+        idevice_error_free(err);
+        return nil;
+    }
+
+    plist_t *apps = NULL;
+    size_t count = 0;
+    err = installation_proxy_get_apps(client, NULL, NULL, 0, (void*)&apps, &count);
+    if (err) {
+        *error = [NSString stringWithFormat:@"Failed to get apps: %s", err->message];
+        idevice_error_free(err);
+        installation_proxy_client_free(client);
+        return nil;
+    }
+    
+    NSMutableArray<NSDictionary*>* result = [NSMutableArray new];
+
+    for (size_t i = 0; i < count; i++) {
+        plist_t app = ((plist_t *)apps)[i];
+        
+        plist_t profileValidatedNode = 0;
+        if(!(profileValidatedNode = plist_dict_get_item(app, "ProfileValidated"))) {
+            continue;
+        }
+        
+        char* bin = 0;
+        uint32_t size = 0;
+        plist_to_bin(app, &bin, &size);
+        if(!bin || size == 0) {
+            continue;
+        }
+        
+        NSData* d = [NSData dataWithBytes:bin length:size];
+        NSError* err;
+        NSDictionary* dict = [NSPropertyListSerialization propertyListWithData:d options:0 format:nil error:&err];
+        plist_mem_free(bin);
+        
+        if(err) {
+            continue;
+        }
+        
+        [result addObject:dict];
+        
+    }
+    
+    installation_proxy_client_free(client);
+    for(int i = 0; i < count; ++i) {
+        plist_free(apps[i]);
+    }
+    idevice_data_free((uint8_t *)apps, sizeof(plist_t)*count);
+    
+    return result;
+}
+
+static NSDictionary<NSString*, NSString*> *performAppQuery(AdapterHandle *adapter,
+                                                           RsdHandshakeHandle *handshake,
                                                            BOOL requireGetTaskAllow,
                                                            NSString **error,
                                                            BOOL (^filter)(plist_t app))
 {
     InstallationProxyClientHandle *client = NULL;
-    IdeviceFfiError* err = installation_proxy_connect(provider, &client);
+    IdeviceFfiError* err = installation_proxy_connect_rsd(adapter, handshake, &client);
     if (err) {
         *error = [NSString stringWithFormat:@"Failed to connect to installation proxy: %s", err->message];
         idevice_error_free(err);
@@ -181,32 +242,36 @@ static NSDictionary<NSString*, NSString*> *performAppQuery(IdeviceProviderHandle
     return result;
 }
 
-NSDictionary<NSString*, NSString*>* list_installed_apps(IdeviceProviderHandle* provider, NSString** error) {
-    return performAppQuery(provider, YES, error, nil);
+NSDictionary<NSString*, NSString*>* list_installed_apps(AdapterHandle* adapter, RsdHandshakeHandle* handshake, NSString** error) {
+    return performAppQuery(adapter, handshake, YES, error, nil);
 }
 
-NSDictionary<NSString*, NSString*>* list_all_apps(IdeviceProviderHandle* provider, NSString** error) {
-    return performAppQuery(provider, NO, error, nil);
+NSDictionary<NSString*, NSString*>* list_all_apps(AdapterHandle* adapter, RsdHandshakeHandle* handshake, NSString** error) {
+    return performAppQuery(adapter, handshake, NO, error, nil);
 }
 
-NSDictionary<NSString*, NSString*>* list_hidden_system_apps(IdeviceProviderHandle* provider, NSString** error) {
-    return performAppQuery(provider, NO, error, ^BOOL(plist_t app) {
+NSDictionary<NSString*, NSString*>* list_hidden_system_apps(AdapterHandle* adapter, RsdHandshakeHandle* handshake, NSString** error) {
+    return performAppQuery(adapter, handshake, NO, error, ^BOOL(plist_t app) {
         return isHiddenSystemApp(app);
     });
 }
 
-UIImage* getAppIcon(IdeviceProviderHandle* provider, NSString* bundleID, NSString** error) {
+UIImage* getAppIcon(AdapterHandle* adapter, RsdHandshakeHandle* handshake, NSString* bundleID, NSString** error) {
     SpringBoardServicesClientHandle *client = NULL;
-    if (springboard_services_connect(provider, &client)) {
-        *error = @"Failed to connect to SpringBoard Services";
+    IdeviceFfiError *err = springboard_services_connect_rsd(adapter, handshake, &client);
+    if (err) {
+        *error = [NSString stringWithUTF8String:err->message ?: "Failed to connect to SpringBoard Services"];
+        idevice_error_free(err);
         return nil;
     }
 
     void *pngData = NULL;
     size_t dataLen = 0;
-    if (springboard_services_get_icon(client, [bundleID UTF8String], &pngData, &dataLen)) {
+    err = springboard_services_get_icon(client, [bundleID UTF8String], &pngData, &dataLen);
+    if (err) {
+        *error = [NSString stringWithUTF8String:err->message ?: "Failed to get app icon"];
+        idevice_error_free(err);
         springboard_services_free(client);
-        *error = @"Failed to get app icon";
         return nil;
     }
 
@@ -218,9 +283,9 @@ UIImage* getAppIcon(IdeviceProviderHandle* provider, NSString* bundleID, NSStrin
     return icon;
 }
 
-NSDictionary *getAllAppsInfo(IdeviceProviderHandle *provider, NSString **error) {
+NSDictionary *getAllAppsInfo(AdapterHandle* adapter, RsdHandshakeHandle* handshake, NSString **error) {
     InstallationProxyClientHandle *client = NULL;
-    if (installation_proxy_connect(provider, &client)) {
+    if (installation_proxy_connect_rsd(adapter, handshake, &client)) {
         *error = @"Failed to connect to installation proxy";
         return nil;
     }
@@ -327,13 +392,13 @@ id plist_to_objc_object(plist_t plist) {
 @implementation JITEnableContext(App)
 
 - (NSDictionary<NSString*, NSString*>*)getAppListWithError:(NSError**)error {
-    [self ensureHeartbeatWithError:error];
+    [self ensureTunnelWithError:error];
     if(*error) {
         return nil;
     }
 
     NSString* errorStr = nil;
-    NSDictionary<NSString*, NSString*>* apps = list_installed_apps(provider, &errorStr);
+    NSDictionary<NSString*, NSString*>* apps = list_installed_apps(adapter, handshake, &errorStr);
     if (errorStr) {
         *error = [self errorWithStr:errorStr code:-17];
         return nil;
@@ -342,13 +407,13 @@ id plist_to_objc_object(plist_t plist) {
 }
 
 - (NSDictionary<NSString*, NSString*>*)getAllAppsWithError:(NSError**)error {
-    [self ensureHeartbeatWithError:error];
+    [self ensureTunnelWithError:error];
     if(*error) {
         return nil;
     }
 
     NSString* errorStr = nil;
-    NSDictionary<NSString*, NSString*>* apps = list_all_apps(provider, &errorStr);
+    NSDictionary<NSString*, NSString*>* apps = list_all_apps(adapter, handshake, &errorStr);
     if (errorStr) {
         *error = [self errorWithStr:errorStr code:-17];
         return nil;
@@ -357,13 +422,28 @@ id plist_to_objc_object(plist_t plist) {
 }
 
 - (NSDictionary<NSString*, NSString*>*)getHiddenSystemAppsWithError:(NSError**)error {
-    [self ensureHeartbeatWithError:error];
+    [self ensureTunnelWithError:error];
     if(*error) {
         return nil;
     }
 
     NSString* errorStr = nil;
-    NSDictionary<NSString*, NSString*>* apps = list_hidden_system_apps(provider, &errorStr);
+    NSDictionary<NSString*, NSString*>* apps = list_hidden_system_apps(adapter, handshake, &errorStr);
+    if (errorStr) {
+        *error = [self errorWithStr:errorStr code:-17];
+        return nil;
+    }
+    return apps;
+}
+
+- (NSArray<NSDictionary*>*)getSideloadedAppsWithError:(NSError**)error {
+    [self ensureTunnelWithError:error];
+    if(*error) {
+        return nil;
+    }
+
+    NSString* errorStr = nil;
+    NSArray<NSDictionary*>* apps = getSideloadedApps(adapter, handshake, &errorStr);
     if (errorStr) {
         *error = [self errorWithStr:errorStr code:-17];
         return nil;
@@ -372,13 +452,13 @@ id plist_to_objc_object(plist_t plist) {
 }
 
 - (UIImage*)getAppIconWithBundleId:(NSString*)bundleId error:(NSError**)error {
-    [self ensureHeartbeatWithError:error];
+    [self ensureTunnelWithError:error];
     if(*error) {
         return nil;
     }
 
     NSString* errorStr = nil;
-    UIImage* icon = getAppIcon(provider, bundleId, &errorStr);
+    UIImage* icon = getAppIcon(adapter, handshake, bundleId, &errorStr);
     if (errorStr) {
         *error = [self errorWithStr:errorStr code:-17];
         return nil;
@@ -387,14 +467,13 @@ id plist_to_objc_object(plist_t plist) {
 }
 
 - (NSDictionary<NSString*, id>*)getAllAppsInfoWithError:(NSError**)error {
-    if (!provider) {
-        NSLog(@"Provider not initialized!");
-        *error = [self errorWithStr:@"Provider not initialized!" code:-1];
+    [self ensureTunnelWithError:error];
+    if(*error) {
         return nil;
     }
 
     NSString* errorStr = nil;
-    NSDictionary<NSString*, id>* apps = getAllAppsInfo(provider, &errorStr);
+    NSDictionary<NSString*, id>* apps = getAllAppsInfo(adapter, handshake, &errorStr);
     if (errorStr) {
         *error = [self errorWithStr:errorStr code:-17];
         return nil;

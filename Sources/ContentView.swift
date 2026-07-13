@@ -37,3 +37,7 @@ struct ContentView: View {
         }
     }
 }
+
+#Preview {
+    Text("Preview")
+}

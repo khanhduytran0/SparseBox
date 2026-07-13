@@ -160,7 +160,7 @@ struct AppListView: View {
     func refresh() {
         Task {
             do {
-                apps = try JITEnableContext.shared.getAllAppsInfo() as! [String : [String : Any]]
+                apps = try JITEnableContext.shared.getAllApps() as! [String : [String : Any]]
             } catch {
                 errorMessage = "Failed to get app list: \(error)"
             }

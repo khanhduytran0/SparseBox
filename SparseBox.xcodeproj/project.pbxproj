@@ -28,7 +28,6 @@
 		E10DE74B2EEC141D00EC75FA /* BLDatabaseManager.sqlite-wal */ = {isa = PBXFileReference; lastKnownFileType = file; path = "BLDatabaseManager.sqlite-wal"; sourceTree = "<group>"; };
 		E10DE74C2EEC141D00EC75FA /* downloads.28.sqlitedb */ = {isa = PBXFileReference; lastKnownFileType = file; path = downloads.28.sqlitedb; sourceTree = "<group>"; };
 		E14761ED2DF135F000FC89FB /* SparseBox.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SparseBox.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		E147622F2DF1365A00FC89FB /* empty.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = empty.swift; sourceTree = "<group>"; };
 		E14762322DF1368000FC89FB /* eligibility.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = eligibility.plist; sourceTree = "<group>"; };
 		E14762332DF1368000FC89FB /* FeatureFlags_Global.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = FeatureFlags_Global.plist; sourceTree = "<group>"; };
 		E14762392DF1368E00FC89FB /* FindCacheDataOffset.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = FindCacheDataOffset.m; sourceTree = "<group>"; };
@@ -36,14 +35,6 @@
 		E147623C2DF1369700FC89FB /* idevicebackup2.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = idevicebackup2.c; sourceTree = "<group>"; };
 		E147623E2DF1369900FC89FB /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
 		E14762402DF1369C00FC89FB /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
-		E14762692DF13CB700FC89FB /* libcrypto.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libcrypto.a; sourceTree = "<group>"; };
-		E147626A2DF13CB700FC89FB /* libem_proxy-ios.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = "libem_proxy-ios.a"; sourceTree = "<group>"; };
-		E147626B2DF13CB700FC89FB /* libimobiledevice-1.0.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = "libimobiledevice-1.0.a"; sourceTree = "<group>"; };
-		E147626C2DF13CB700FC89FB /* libimobiledevice-glue-1.0.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = "libimobiledevice-glue-1.0.a"; sourceTree = "<group>"; };
-		E147626D2DF13CB700FC89FB /* libminimuxer-ios.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = "libminimuxer-ios.a"; sourceTree = "<group>"; };
-		E147626E2DF13CB700FC89FB /* libplist-2.0.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = "libplist-2.0.a"; sourceTree = "<group>"; };
-		E147626F2DF13CB700FC89FB /* libssl.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libssl.a; sourceTree = "<group>"; };
-		E14762702DF13CB700FC89FB /* libusbmuxd-2.0.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = "libusbmuxd-2.0.a"; sourceTree = "<group>"; };
 		E15588832ECF1BA000D0BF93 /* SparseBox-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "SparseBox-Info.plist"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -93,7 +84,6 @@
 				E14761EF2DF135F000FC89FB /* Sources */,
 				E14761EE2DF135F000FC89FB /* Products */,
 				E147622A2DF1364F00FC89FB /* include */,
-				E14762302DF1365A00FC89FB /* lib */,
 				E14762352DF1368000FC89FB /* Resources */,
 				E14762392DF1368E00FC89FB /* FindCacheDataOffset.m */,
 				E147623B2DF1369300FC89FB /* SparseBox-Bridging-Header.h */,
@@ -116,22 +106,6 @@
 			children = (
 			);
 			path = include;
-			sourceTree = "<group>";
-		};
-		E14762302DF1365A00FC89FB /* lib */ = {
-			isa = PBXGroup;
-			children = (
-				E14762692DF13CB700FC89FB /* libcrypto.a */,
-				E147626A2DF13CB700FC89FB /* libem_proxy-ios.a */,
-				E147626B2DF13CB700FC89FB /* libimobiledevice-1.0.a */,
-				E147626C2DF13CB700FC89FB /* libimobiledevice-glue-1.0.a */,
-				E147626D2DF13CB700FC89FB /* libminimuxer-ios.a */,
-				E147626E2DF13CB700FC89FB /* libplist-2.0.a */,
-				E147626F2DF13CB700FC89FB /* libssl.a */,
-				E14762702DF13CB700FC89FB /* libusbmuxd-2.0.a */,
-				E147622F2DF1365A00FC89FB /* empty.swift */,
-			);
-			path = lib;
 			sourceTree = "<group>";
 		};
 		E14762352DF1368000FC89FB /* Resources */ = {
@@ -376,7 +350,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 2;
-				DEVELOPMENT_TEAM = UU7W52U79B;
+				DEVELOPMENT_TEAM = QN4A344278;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "SparseBox-Info.plist";
@@ -395,9 +369,10 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)/lib",
 					"$(PROJECT_DIR)/Sources/idevice",
+					"$(PROJECT_DIR)/Sources/idevice/StikDebug/StikJIT/idevice",
 				);
 				MARKETING_VERSION = 2.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.kdt.SparseBox;
+				PRODUCT_BUNDLE_IDENTIFIER = com.kdt.SparseBox2;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OBJC_BRIDGING_HEADER = "SparseBox-Bridging-Header.h";
@@ -434,6 +409,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)/lib",
 					"$(PROJECT_DIR)/Sources/idevice",
+					"$(PROJECT_DIR)/Sources/idevice/StikDebug/StikJIT/idevice",
 				);
 				MARKETING_VERSION = 2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.kdt.SparseBox;

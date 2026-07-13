@@ -10,12 +10,11 @@
 @import Foundation;
 @import UIKit;
 
-NSDictionary<NSString*, NSString*>* list_installed_apps(IdeviceProviderHandle* provider, NSString** error);
-NSDictionary<NSString*, NSString*>* list_all_apps(IdeviceProviderHandle* provider, NSString** error);
-NSDictionary<NSString*, NSString*>* list_hidden_system_apps(IdeviceProviderHandle* provider, NSString** error);
-UIImage* getAppIcon(IdeviceProviderHandle* provider, NSString* bundleID, NSString** error);
-
-NSDictionary *getAllAppsInfo(IdeviceProviderHandle *provider, NSString **error);
+NSDictionary<NSString*, NSString*>* list_installed_apps(AdapterHandle* adapter, RsdHandshakeHandle* handshake, NSString** error);
+NSDictionary<NSString*, NSString*>* list_all_apps(AdapterHandle* adapter, RsdHandshakeHandle* handshake, NSString** error);
+NSDictionary<NSString*, NSString*>* list_hidden_system_apps(AdapterHandle* adapter, RsdHandshakeHandle* handshake, NSString** error);
+UIImage* getAppIcon(AdapterHandle* adapter, RsdHandshakeHandle* handshake, NSString* bundleID, NSString** error);
+NSDictionary *getAllAppsInfo(AdapterHandle* adapter, RsdHandshakeHandle* handshake, NSString **error);
 id plist_to_objc_object(plist_t plist);
 
 #endif /* APPLIST_H */

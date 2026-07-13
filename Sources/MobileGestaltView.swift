@@ -43,6 +43,7 @@ struct MobileGestaltView: View {
                 Toggle("Dynamic Island (17.4+, might not work)", isOn: bindingForMGKeys(["YlEtTtHlNesRBMal1CqRaA"]))
                     .disabled(Utils.requiresVersion(17, 4))
                 Toggle("Disable region restrictions", isOn: bindingForRegionRestriction())
+                Toggle("Enable Device Hub remote (FIXME: doesn't work)", isOn: bindingForDeviceHubRemote())
                 Toggle("Internal Storage info", isOn: bindingForMGKeys(["LBJfwOEzExRxzlAnSuI7eg"]))
                 Toggle("Internal stuff", isOn: bindingForInternalStuff())
                 Toggle("Security Research Device", isOn: bindingForMGKeys(["XYlJKKkj2hztRP1NWWnhlw"]))
@@ -52,6 +53,7 @@ struct MobileGestaltView: View {
                 if UIDevice._hasHomeButton() {
                     Toggle("Tap to Wake (iPhone SE)", isOn: bindingForMGKeys(["yZf3GTRMGTuwSV/lD7Cagw"]))
                 }
+                Toggle("SiliconBringupBoard", isOn: bindingForMGKeys(["cZflGJ39lJHTCPy35/N14Q"]))
             } header: {
                 Text("MobileGestalt")
             }
@@ -256,6 +258,24 @@ struct MobileGestaltView: View {
                     cacheExtra.removeObject(forKey: "h63QSdBCiT/z0WU6rdQv6Q")
                     cacheExtra.removeObject(forKey: "zHeENZu+wbg7PUprwNwBWg")
                 }
+            }
+        )
+    }
+    
+    func bindingForDeviceHubRemote() -> Binding<Bool> {
+        // we need to do it via CacheData
+        // SigningFuse = isProductionMode
+        guard let cacheData = mobileGestalt["CacheData"] as? NSMutableData else {
+            return State(initialValue: false).projectedValue
+        }
+        let off_SigningFuse = FindCacheDataOffset("a5BRUxn1QBPXkAnbAHbmeg")
+        
+        return Binding(
+            get: {
+                return cacheData.bytes.load(fromByteOffset: off_SigningFuse, as: Int.self) == 0
+            },
+            set: { enabled in
+                cacheData.mutableBytes.storeBytes(of: enabled ? 0 : 1, toByteOffset: off_SigningFuse, as: Int.self)
             }
         )
     }

@@ -41,6 +41,9 @@ struct ProcessItemView: View {
                 Button("SIGKILL - Kill") {
                     sendSignal(SIGKILL)
                 }
+                Button("SIGQUIT - Tap this to dump threads") {
+                    sendSignal(SIGQUIT)
+                }
             } header: { Text("Send signal") }
         }
     }

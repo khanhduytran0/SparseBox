@@ -148,7 +148,7 @@ Thanks to:
             }
             
             if pairingFile == nil {
-                pairingFile = try? String(contentsOf: URL.documentsDirectory.appendingPathComponent("pairingFile.plist"))
+                pairingFile = try? String(contentsOf: URL.documentsDirectory.appendingPathComponent("rp_pairing_file.plist"))
             }
             
             if let altPairingFile = Bundle.main.object(forInfoDictionaryKey: "ALTPairingFile") as? String, altPairingFile.count > 5000, pairingFile == nil {
@@ -182,7 +182,7 @@ Thanks to:
     }
     
     func savePairingFile() {
-        try? pairingFile?.write(to: URL.documentsDirectory.appendingPathComponent("pairingFile.plist"), atomically: true, encoding: .utf8)
+        try? pairingFile?.write(to: URL.documentsDirectory.appendingPathComponent("rp_pairing_file.plist"), atomically: true, encoding: .utf8)
     }
 
     func testBypassAppLimit() {
@@ -206,7 +206,7 @@ Thanks to:
         //let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].absoluteString
         DispatchQueue.global(qos: .userInteractive).async {
             do {
-                try JITEnableContext.shared.startHeartbeat()
+                //try JITEnableContext.shared.startHeartbeat()
                 heartbeatReady = true
                 print("Heartbeat started successfully")
                 
@@ -234,7 +234,7 @@ Thanks to:
                 DispatchQueue.main.async {
                     if code == -9 {
                         do {
-                            try FileManager.default.removeItem(at: URL.documentsDirectory.appendingPathComponent("pairingFile.plist"))
+                            try FileManager.default.removeItem(at: URL.documentsDirectory.appendingPathComponent("rp_pairing_file.plist"))
                             print("Removed invalid pairing file")
                         } catch {
                             print("Error removing invalid pairing file: \(error)")

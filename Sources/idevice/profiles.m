@@ -14,18 +14,18 @@ NSError* makeError(int code, NSString* msg) {
 }
 
 
-NSArray<NSData*>* fetchAppProfiles(IdeviceProviderHandle* provider, NSError** error) {
-    MisagentClientHandle* misagentHandle = 0;
-    IdeviceFfiError * err = misagent_connect(provider, &misagentHandle);
+NSArray<NSData*>* fetchAppProfiles(AdapterHandle* adapter, RsdHandshakeHandle* handshake, NSError** error) {
+    MisagentClientHandle *misagentHandle = NULL;
+    IdeviceFfiError *err = misagent_connect_rsd(adapter, handshake, &misagentHandle);
     if (err) {
         *error = makeError(err->code, @(err->message));
         idevice_error_free(err);
         return nil;
     }
-    
-    uint8_t** profileArr = 0;
+
+    uint8_t **profileArr = NULL;
     size_t profileCount = 0;
-    size_t* profileLengthArr = 0;
+    size_t *profileLengthArr = NULL;
     err = misagent_copy_all(misagentHandle, &profileArr, &profileLengthArr, &profileCount);
 
     if (err) {
@@ -50,9 +50,9 @@ NSArray<NSData*>* fetchAppProfiles(IdeviceProviderHandle* provider, NSError** er
     return ans;
 }
 
-bool removeProfile(IdeviceProviderHandle* provider, NSString* uuid, NSError** error) {
-    MisagentClientHandle* misagentHandle = 0;
-    IdeviceFfiError * err = misagent_connect(provider, &misagentHandle);
+bool removeProfile(AdapterHandle* adapter, RsdHandshakeHandle* handshake, NSString* uuid, NSError** error) {
+    MisagentClientHandle *misagentHandle = NULL;
+    IdeviceFfiError * err = misagent_connect_rsd(adapter, handshake, &misagentHandle);
     if (err) {
         *error = makeError(err->code, @(err->message));
         idevice_error_free(err);
@@ -71,9 +71,9 @@ bool removeProfile(IdeviceProviderHandle* provider, NSString* uuid, NSError** er
     return true;
 }
 
-bool addProfile(IdeviceProviderHandle* provider, NSData* profile, NSError** error) {
-    MisagentClientHandle* misagentHandle = 0;
-    IdeviceFfiError * err = misagent_connect(provider, &misagentHandle);
+bool addProfile(AdapterHandle* adapter, RsdHandshakeHandle* handshake, NSData* profile, NSError** error) {
+    MisagentClientHandle *misagentHandle = NULL;
+    IdeviceFfiError * err = misagent_connect_rsd(adapter, handshake, &misagentHandle);
     if (err) {
         *error = makeError(err->code, @(err->message));
         idevice_error_free(err);
@@ -107,34 +107,25 @@ bool addProfile(IdeviceProviderHandle* provider, NSData* profile, NSError** erro
         return nil;
     }
 
-    NSData *xmlStart = [@"<?xml" dataUsingEncoding:NSASCIIStringEncoding];
-    NSData *plistEnd = [@"</plist>" dataUsingEncoding:NSASCIIStringEncoding];
+    NSData *xmlStart    = [@"<?xml"    dataUsingEncoding:NSASCIIStringEncoding];
+    NSData *plistEnd    = [@"</plist>" dataUsingEncoding:NSASCIIStringEncoding];
     NSData *binaryMagic = [@"bplist00" dataUsingEncoding:NSASCIIStringEncoding];
 
-    if (xmlStart && plistEnd) {
-        NSRange searchRange = NSMakeRange(0, cmsData.length);
-        NSRange startRange = [cmsData rangeOfData:xmlStart options:0 range:searchRange];
-        if (startRange.location != NSNotFound) {
-            NSUInteger remainingLength = cmsData.length - startRange.location;
-            NSRange endSearchRange = NSMakeRange(startRange.location, remainingLength);
-            NSRange endRange = [cmsData rangeOfData:plistEnd options:0 range:endSearchRange];
-            if (endRange.location != NSNotFound) {
-                NSUInteger plistStart = startRange.location;
-                NSUInteger plistEndIndex = NSMaxRange(endRange);
-                if (plistEndIndex > plistStart && plistEndIndex <= cmsData.length) {
-                    NSRange plistRange = NSMakeRange(plistStart, plistEndIndex - plistStart);
-                    return [cmsData subdataWithRange:plistRange];
-                }
+    NSRange startRange = [cmsData rangeOfData:xmlStart options:0 range:NSMakeRange(0, cmsData.length)];
+    if (startRange.location != NSNotFound) {
+        NSRange endSearchRange = NSMakeRange(startRange.location, cmsData.length - startRange.location);
+        NSRange endRange = [cmsData rangeOfData:plistEnd options:0 range:endSearchRange];
+        if (endRange.location != NSNotFound) {
+            NSUInteger plistEndIndex = NSMaxRange(endRange);
+            if (plistEndIndex > startRange.location && plistEndIndex <= cmsData.length) {
+                return [cmsData subdataWithRange:NSMakeRange(startRange.location, plistEndIndex - startRange.location)];
             }
         }
     }
 
-    if (binaryMagic) {
-        NSRange binaryRange = [cmsData rangeOfData:binaryMagic options:0 range:NSMakeRange(0, cmsData.length)];
-        if (binaryRange.location != NSNotFound) {
-            NSRange plistRange = NSMakeRange(binaryRange.location, cmsData.length - binaryRange.location);
-            return [cmsData subdataWithRange:plistRange];
-        }
+    NSRange binaryRange = [cmsData rangeOfData:binaryMagic options:0 range:NSMakeRange(0, cmsData.length)];
+    if (binaryRange.location != NSNotFound) {
+        return [cmsData subdataWithRange:NSMakeRange(binaryRange.location, cmsData.length - binaryRange.location)];
     }
 
     if (error) {
@@ -150,29 +141,29 @@ bool addProfile(IdeviceProviderHandle* provider, NSData* profile, NSError** erro
 @implementation JITEnableContext(Profile)
 
 - (NSArray<NSData*>*)fetchAllProfiles:(NSError **)error {
-    [self ensureHeartbeatWithError:error];
+    [self ensureTunnelWithError:error];
     if(*error) {
         return nil;
     }
     
-    return fetchAppProfiles(provider, error);
+    return fetchAppProfiles(adapter, handshake, error);
 }
 
 - (BOOL)removeProfileWithUUID:(NSString*)uuid error:(NSError **)error {
-    [self ensureHeartbeatWithError:error];
+    [self ensureTunnelWithError:error];
     if(*error) {
-        return nil;
+        return NO;
     }
     
-    return removeProfile(provider, uuid, error);
+    return removeProfile(adapter, handshake, uuid, error);
 }
 
 - (BOOL)addProfile:(NSData*)profile error:(NSError **)error {
-    [self ensureHeartbeatWithError:error];
+    [self ensureTunnelWithError:error];
     if(*error) {
-        return nil;
+        return NO;
     }
-    return addProfile(provider, profile, error);
+    return addProfile(adapter, handshake, profile, error);
 }
 
 

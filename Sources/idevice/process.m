@@ -9,107 +9,61 @@
 #import "JITEnableContextInternal.h"
 @import Foundation;
 
+// MARK: - Shared AppService session
+
+typedef struct {
+    AppServiceHandle   *appService;
+} AppServiceSession;
+
+static void app_service_session_free(AppServiceSession *s) {
+    if (s->appService) { app_service_free(s->appService);      s->appService = NULL; }
+}
+
+// Connects to the device via the existing adapter+handshake → AppService.
+// Returns 0 on success; cleans up any partial state and returns 1 on failure.
+static int connect_app_service(AdapterHandle *adapter,
+                                RsdHandshakeHandle *handshake,
+                                AppServiceSession *out,
+                                JITEnableContext *ctx,
+                                NSError **outError)
+{
+    memset(out, 0, sizeof(*out));
+    IdeviceFfiError *ffiError = NULL;
+
+    ffiError = app_service_connect_rsd(adapter, handshake, &out->appService);
+    if (ffiError) {
+        *outError = [ctx errorWithStr:[NSString stringWithUTF8String:ffiError->message ?: "Unable to open AppService"]
+                                 code:ffiError->code];
+        idevice_error_free(ffiError);
+        return 1;
+    }
+
+    return 0;
+}
+
+// MARK: - JITEnableContext(Process)
+
 @implementation JITEnableContext(Process)
 
 - (NSArray<NSDictionary*>*)fetchProcessesViaAppServiceWithError:(NSError **)error {
-    [self ensureHeartbeatWithError:error];
-    if(*error) {
-        return nil;
-    }
-    
-    IdeviceProviderHandle *providerToUse = provider;
-    CoreDeviceProxyHandle *coreProxy = NULL;
-    AdapterHandle *adapter = NULL;
-    AdapterStreamHandle *stream = NULL;
-    RsdHandshakeHandle *handshake = NULL;
-    AppServiceHandle *appService = NULL;
+    [self ensureTunnelWithError:error];
+    if (*error) { return nil; }
+
+    AppServiceSession session;
+    if (connect_app_service(adapter, handshake, &session, self, error) != 0) { return nil; }
+
     ProcessTokenC *processes = NULL;
     uintptr_t count = 0;
+    IdeviceFfiError *ffiError = app_service_list_processes(session.appService, &processes, &count);
+
     NSMutableArray *result = nil;
-    IdeviceFfiError *ffiError = NULL;
-
-    do {
-
-        ffiError = core_device_proxy_connect(providerToUse, &coreProxy);
-        if (ffiError) {
-            if (error) {
-                *error = [self errorWithStr:[NSString stringWithUTF8String:ffiError->message ?: "Failed to connect CoreDeviceProxy"]
-                                       code:ffiError->code];
-            }
-            idevice_error_free(ffiError);
-            ffiError = NULL;
-            break;
+    if (ffiError) {
+        if (error) {
+            *error = [self errorWithStr:[NSString stringWithUTF8String:ffiError->message ?: "Failed to list processes"]
+                                   code:ffiError->code];
         }
-
-        uint16_t rsdPort = 0;
-        ffiError = core_device_proxy_get_server_rsd_port(coreProxy, &rsdPort);
-        if (ffiError) {
-            if (error) {
-                *error = [self errorWithStr:[NSString stringWithUTF8String:ffiError->message ?: "Unable to resolve RSD port"]
-                                       code:ffiError->code];
-            }
-            idevice_error_free(ffiError);
-            ffiError = NULL;
-            break;
-        }
-
-        ffiError = core_device_proxy_create_tcp_adapter(coreProxy, &adapter);
-        if (ffiError) {
-            if (error) {
-                *error = [self errorWithStr:[NSString stringWithUTF8String:ffiError->message ?: "Failed to create adapter"]
-                                       code:ffiError->code];
-            }
-            idevice_error_free(ffiError);
-            ffiError = NULL;
-            break;
-        }
-
-        coreProxy = NULL;
-        ffiError = adapter_connect(adapter, rsdPort, (ReadWriteOpaque **)&stream);
-        if (ffiError) {
-            if (error) {
-                *error = [self errorWithStr:[NSString stringWithUTF8String:ffiError->message ?: "Adapter connect failed"]
-                                       code:ffiError->code];
-            }
-            idevice_error_free(ffiError);
-            ffiError = NULL;
-            break;
-        }
-
-        ffiError = rsd_handshake_new((ReadWriteOpaque *)stream, &handshake);
-        if (ffiError) {
-            if (error) {
-                *error = [self errorWithStr:[NSString stringWithUTF8String:ffiError->message ?: "RSD handshake failed"]
-                                       code:ffiError->code];
-            }
-            idevice_error_free(ffiError);
-            ffiError = NULL;
-            break;
-        }
-
-        stream = NULL;
-        ffiError = app_service_connect_rsd(adapter, handshake, &appService);
-        if (ffiError) {
-            if (error) {
-                *error = [self errorWithStr:[NSString stringWithUTF8String:ffiError->message ?: "Unable to open AppService"]
-                                       code:ffiError->code];
-            }
-            idevice_error_free(ffiError);
-            ffiError = NULL;
-            break;
-        }
-
-        ffiError = app_service_list_processes(appService, &processes, &count);
-        if (ffiError) {
-            if (error) {
-                *error = [self errorWithStr:[NSString stringWithUTF8String:ffiError->message ?: "Failed to list processes"]
-                                       code:ffiError->code];
-            }
-            idevice_error_free(ffiError);
-            ffiError = NULL;
-            break;
-        }
-
+        idevice_error_free(ffiError);
+    } else {
         result = [NSMutableArray arrayWithCapacity:count];
         for (uintptr_t idx = 0; idx < count; idx++) {
             ProcessTokenC proc = processes[idx];
@@ -120,34 +74,18 @@
             }
             [result addObject:entry];
         }
-    } while (0);
+        if (processes && count > 0) {
+            app_service_free_process_list(processes, count);
+        }
+    }
 
-    if (processes && count > 0) {
-        app_service_free_process_list(processes, count);
-    }
-    if (appService) {
-        app_service_free(appService);
-    }
-    if (handshake) {
-        rsd_handshake_free(handshake);
-    }
-    if (stream) {
-        adapter_stream_close(stream);
-    }
-    if (adapter) {
-        adapter_free(adapter);
-    }
-    if (coreProxy) {
-        core_device_proxy_free(coreProxy);
-    }
+    app_service_session_free(&session);
     return result;
 }
 
 - (NSArray<NSDictionary*>*)_fetchProcessListLocked:(NSError**)error {
-    [self ensureHeartbeatWithError:error];
-    if(*error) {
-        return nil;
-    }
+    [self ensureTunnelWithError:error];
+    if (*error) { return nil; }
     return [self fetchProcessesViaAppServiceWithError:error];
 }
 
@@ -164,124 +102,29 @@
 }
 
 - (BOOL)killProcessWithPID:(int)pid signal:(int)signal error:(NSError **)error {
-    [self ensureHeartbeatWithError:error];
-    if(*error) {
-        return nil;
-    }
-    
-    IdeviceProviderHandle *providerToUse = provider;
-    CoreDeviceProxyHandle *coreProxy = NULL;
-    AdapterHandle *adapter = NULL;
-    AdapterStreamHandle *stream = NULL;
-    RsdHandshakeHandle *handshake = NULL;
-    AppServiceHandle *appService = NULL;
+    [self ensureTunnelWithError:error];
+    if (*error) { return NO; }
+
+    AppServiceSession session;
+    if (connect_app_service(adapter, handshake, &session, self, error) != 0) { return NO; }
+
     SignalResponseC *signalResponse = NULL;
-    IdeviceFfiError *ffiError = NULL;
+    IdeviceFfiError *ffiError = app_service_send_signal(session.appService, (uint32_t)pid, signal, &signalResponse);
+
     BOOL success = NO;
-
-    do {
-        ffiError = core_device_proxy_connect(providerToUse, &coreProxy);
-        if (ffiError) {
-            if (error) {
-                *error = [self errorWithStr:[NSString stringWithUTF8String:ffiError->message ?: "Failed to connect CoreDeviceProxy"]
-                                       code:ffiError->code];
-            }
-            idevice_error_free(ffiError);
-            ffiError = NULL;
-            break;
+    if (ffiError) {
+        if (error) {
+            *error = [self errorWithStr:[NSString stringWithUTF8String:ffiError->message ?: "Failed to kill process"]
+                                   code:ffiError->code];
         }
-
-        uint16_t rsdPort = 0;
-        ffiError = core_device_proxy_get_server_rsd_port(coreProxy, &rsdPort);
-        if (ffiError) {
-            if (error) {
-                *error = [self errorWithStr:[NSString stringWithUTF8String:ffiError->message ?: "Unable to resolve RSD port"]
-                                       code:ffiError->code];
-            }
-            idevice_error_free(ffiError);
-            ffiError = NULL;
-            break;
-        }
-
-        ffiError = core_device_proxy_create_tcp_adapter(coreProxy, &adapter);
-        if (ffiError) {
-            if (error) {
-                *error = [self errorWithStr:[NSString stringWithUTF8String:ffiError->message ?: "Failed to create adapter"]
-                                       code:ffiError->code];
-            }
-            idevice_error_free(ffiError);
-            ffiError = NULL;
-            break;
-        }
-
-        coreProxy = NULL;
-        ffiError = adapter_connect(adapter, rsdPort, (ReadWriteOpaque **)&stream);
-        if (ffiError) {
-            if (error) {
-                *error = [self errorWithStr:[NSString stringWithUTF8String:ffiError->message ?: "Adapter connect failed"]
-                                       code:ffiError->code];
-            }
-            idevice_error_free(ffiError);
-            ffiError = NULL;
-            break;
-        }
-
-        ffiError = rsd_handshake_new((ReadWriteOpaque *)stream, &handshake);
-        if (ffiError) {
-            if (error) {
-                *error = [self errorWithStr:[NSString stringWithUTF8String:ffiError->message ?: "RSD handshake failed"]
-                                       code:ffiError->code];
-            }
-            idevice_error_free(ffiError);
-            ffiError = NULL;
-            break;
-        }
-
-        stream = NULL;
-        ffiError = app_service_connect_rsd(adapter, handshake, &appService);
-        if (ffiError) {
-            if (error) {
-                *error = [self errorWithStr:[NSString stringWithUTF8String:ffiError->message ?: "Unable to open AppService"]
-                                       code:ffiError->code];
-            }
-            idevice_error_free(ffiError);
-            ffiError = NULL;
-            break;
-        }
-
-        ffiError = app_service_send_signal(appService, (uint32_t)pid, signal, &signalResponse);
-        if (ffiError) {
-            if (error) {
-                *error = [self errorWithStr:[NSString stringWithUTF8String:ffiError->message ?: "Failed to kill process"]
-                                       code:ffiError->code];
-            }
-            idevice_error_free(ffiError);
-            ffiError = NULL;
-            break;
-        }
+        idevice_error_free(ffiError);
+    } else {
         success = YES;
-    } while (0);
+    }
 
-    if (signalResponse) {
-        app_service_free_signal_response(signalResponse);
-    }
-    if (appService) {
-        app_service_free(appService);
-    }
-    if (handshake) {
-        rsd_handshake_free(handshake);
-    }
-    if (stream) {
-        adapter_stream_close(stream);
-    }
-    if (adapter) {
-        adapter_free(adapter);
-    }
-    if (coreProxy) {
-        core_device_proxy_free(coreProxy);
-    }
+    if (signalResponse) { app_service_free_signal_response(signalResponse); }
+    app_service_session_free(&session);
     return success;
 }
-
 
 @end
